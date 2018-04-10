@@ -145,7 +145,7 @@ function WriteInfo (msg, code) {
  * @param {number} [code] Код
  */
 function ConsoleWrite (prefix, msg, code) {
-    console.log( Reset(Bold( White(prefix, true) + ConcatMsg(msg, code) )) );
+    console.log( Reset(Bold( White(prefix, true) + ConcatMsg(msg, code) ), true) );
 }
 /**
  * Вывод сообщения в файл
