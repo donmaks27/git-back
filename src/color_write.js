@@ -63,6 +63,11 @@ module.exports.file = {
 
 
 
+var fs = require('fs');
+var path = require('path');
+
+
+
 // Вывод
 
 /**
@@ -71,7 +76,7 @@ module.exports.file = {
  * @param {number} [code] Код
  */
 function ConsoleWriteError (msg, code) {
-    console.log( Bold(White(Red(GetErrorMsg()), true)) + Reset(ConcatMsg(msg, code), true) );
+    ConsoleWrite( Red(GetErrorPrefix()), msg, code );
 }
 /**
  * Вывод сообщения об ошибке
@@ -79,7 +84,7 @@ function ConsoleWriteError (msg, code) {
  * @param {number} [code] Код
  */
 function WriteError (msg, code) {
-    
+    Write(GetErrorPrefix(), msg, code);
 }
 
 /**
@@ -88,7 +93,7 @@ function WriteError (msg, code) {
  * @param {number} [code] Код
  */
 function ConsoleWriteWarning (msg, code) {
-    console.log( Bold(White(Yellow(GetWarningMsg()), true)) + Reset(ConcatMsg(msg, code), true) );
+    ConsoleWrite( Yellow(GetWarningPrefix()), msg, code );
 }
 /**
  * Вывод предупреждения
@@ -96,7 +101,7 @@ function ConsoleWriteWarning (msg, code) {
  * @param {number} [code] Код
  */
 function WriteWarning (msg, code) {
-    
+    Write(GetWarningPrefix(), msg, code);
 }
 
 /**
@@ -105,7 +110,7 @@ function WriteWarning (msg, code) {
  * @param {number} [code] Код
  */
 function ConsoleWriteCorrect (msg, code) {
-    console.log( Bold(White(Green(GetCorrectMsg()), true)) + Reset(ConcatMsg(msg, code), true) );
+    ConsoleWrite( Green(GetCorrectPrefix()), msg, code );
 }
 /**
  * Вывод утвердительного сообщения
@@ -113,7 +118,7 @@ function ConsoleWriteCorrect (msg, code) {
  * @param {number} [code] Код
  */
 function WriteCorrect (msg, code) {
-    
+    Write(GetCorrectPrefix(), msg, code);
 }
 
 /**
@@ -122,7 +127,7 @@ function WriteCorrect (msg, code) {
  * @param {number} [code] Код
  */
 function ConsoleWriteInfo (msg, code) {
-    console.log( Bold(White(GetInfoMsg())) + Reset(ConcatMsg(msg, code), true) );
+    ConsoleWrite( White(GetInfoPrefix()), msg, code );
 }
 /**
  * Вывод информации
@@ -130,7 +135,29 @@ function ConsoleWriteInfo (msg, code) {
  * @param {number} [code] Код
  */
 function WriteInfo (msg, code) {
-    
+    Write(GetInfoPrefix(), msg, code);
+}
+
+/**
+ * Вывод сообщения на консоль
+ * @param {string} prefix Префикс строки
+ * @param {string} msg Сообщение
+ * @param {number} [code] Код
+ */
+function ConsoleWrite (prefix, msg, code) {
+    console.log( Reset(Bold( White(prefix, true) + ConcatMsg(msg, code) )) );
+}
+/**
+ * Вывод сообщения в файл
+ * @param {string} prefix Префикс строки
+ * @param {string} msg Сообщение
+ * @param {number} [code] Код
+ */
+function Write (prefix, msg, code) {
+    let date = new Date();
+    fs.appendFileSync( GetLogFilePath(date), prefix + GetTime(date) + ' ' + ConcatMsg(msg, code) + '\n', {
+        encoding: 'utf-8'
+    });
 }
 
 
@@ -141,21 +168,21 @@ function WriteInfo (msg, code) {
  * Получить префикс для строки с ошибкой
  * @returns {string} Префикс для строки с ошибкой
  */
-function GetErrorMsg () {
+function GetErrorPrefix () {
     return '  [ERR] ';
 }
 /**
  * Получить префикс для строки с предупреждением
  * @returns {string} Префикс для строки с предупреждением
  */
-function GetWarningMsg () {
+function GetWarningPrefix () {
     return '  [WRN] ';
 }
 /**
  * Получить префикс для строки с утвердительным сообщением
  * @returns {string} Префикс для строки с утвердительным сообщением
  */
-function GetCorrectMsg () {
+function GetCorrectPrefix () {
     return '  [OK]  ';
 }
 /**
@@ -168,7 +195,7 @@ function GetInfoMsg () {
 
 
 
-// Преобразование перед выводом
+// Вспомогательные функции
 
 /**
  * Объеденить код и собщение
@@ -186,6 +213,46 @@ function ConcatMsg (msg, code) {
  */
 function GetCodeStr (code) {
     return (code != null) ? 'Код: ' + code + '. ' : '';
+}
+/**
+ * Получить имя лог файла
+ * @param {Date} [date] Текущая дата 
+ * @returns {string} Полный путь к файлу
+ */
+function GetLogFilePath (date) {
+    if (!date)
+        date = new Date();
+    let month = date.getMonth();
+    let day = date.getDay();
+
+    let nameLog = 'log-' + date.getFullYear() + 
+                  '-' + (month < 10 ? '0' : '') + month + 
+                  '-' + (day < 10 ? '0' : '') + day + '.txt';
+    let pathLog = path.join(path.dirname(__dirname), 'log');
+    if (!fs.existsSync(pathLog))
+        fs.mkdirSync(pathLog);
+    
+    return path.join(pathLog, nameLog);
+}
+/**
+ * Получить строку со временем
+ * @param {Date} [date] Текущая дата 
+ * @returns {string} Строка с текущим временем
+ */
+function GetTime (date) {
+    if (!date)
+        date = new Date();
+    let hour = date.getHours().toString();
+    let minute = date.getMinutes().toString();
+    let second = date.getSeconds().toString();
+    let millisecond = date.getMilliseconds().toString();
+
+    if (hour < 10) hour = '0' + hour;
+    if (minute < 10) minute = '0' + minute;
+    if (second < 10) second = '0' + second;
+    while (millisecond.length < 3) millisecond = '0' + millisecond;
+
+    return hour + ':' + minute + ':' + second + '.' + millisecond;
 }
 
 
