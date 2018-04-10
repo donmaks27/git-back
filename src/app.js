@@ -1,13 +1,34 @@
+var path = require('path');
+
 const Write = require('./color_write'); 
-const Names = require('./consts');
-const Yandex = require('./yandex')(Names);
+const Consts = new (require('./consts'))();
+const Repo = new (require('./repoWorker'))(Consts);
+const Yandex = new (require('./yandexWorker'))(Consts);
 
 
 
-switch (Names.command) {
+switch (Consts.command) {
     // Отправка репозитория на сервер
     case 'push':
-        Write.console.warning('В разработке');
+        Consts.setNames( path.basename(path.dirname(Consts.pathCurrent)), path.basename(Consts.pathCurrent) );
+        // Проверка на корректность текущей директории
+        if (Repo.checkCurrentRepo()) {
+            // Создание локальной копии репозитория
+            Repo.cloneCurrentToLocal();
+            // Если указано - отправить копию репозитория на сервер сразу, без внесения сделанных изменений
+            if (Consts.arg1 != 'repo')
+                Repo.pushCurrentToLocal();
+            // Упаковка локальной копии репозитория в архив
+            Repo.packLocalRepo(() => {
+                // Отправка архива на сервер
+                /*Yandex.sendLocalRepoArchive(function (error) {
+                    if (error) Write.console.error('Ошибка отправки данных');
+                    else       Write.console.correct('Данные успешно отправлены');
+                    // Удаление архива
+                    Repo.deleteLocalRepoArchive();
+                });*/
+            });
+        }
         break;
         
     // Получение репозитория с сервера
