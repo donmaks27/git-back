@@ -17,6 +17,11 @@ function Consts () {
      */
     this.pathReposLocal = path.join(path.dirname(__dirname), 'data');
     /**
+     * Путь к папке с данными авторизации
+     * @type {string}
+     */
+    this.pathCredentials = path.join(path.dirname(__dirname), 'credentials');
+    /**
      * Путь к текущей директории, из которой вызывается git-back
      * @type {string}
      */
