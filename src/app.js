@@ -69,6 +69,11 @@ switch (Consts.command) {
         console.log( Write.bold(Write.green('  clear-all')) + Write.reset(Write.white(' - Удалить локальные копии всех репозиториев.')) );
         break;
 
+    // Обработка схемы
+    case 'url':
+        
+        break;
+
     default:
         Write.console.error('Не указана команда');
 }
