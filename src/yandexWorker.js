@@ -1,37 +1,30 @@
 // Модуль для общения с Яндекс.Диском
 
+/**
+ * Идентификатор приложения
+ * @typedef {{ID: string, secret: string}} AppID 
+ */
+/**
+ * Данные токена
+ * @typedef {{token: string, refresh_token: string, expire: number, create_time: Date}} Token 
+ */
+
 var fs = require('fs');
 var path = require('path');
+var https = require('https');
+var opn = require('opn');
+var url = require('url');
 
+const Write = require('./color_write');
 var consts = require('./consts');
+var YandexToken = require('./yandexToken');
 
 /**
  * Конструктор
  * @param {consts} consts Константы
  */
 function Yandex (consts) {
-    /* ОТПРАВКА И ПОЛУЧЕНИЕ ДАННЫХ */
-
-    /* РАБОТА С ТОКЕНАМИ */
-
-    /**
-     * Создать папку с данными авторизации
-     */
-    this.createCredentialFolder = () => {
-        if (fs.existsSync(consts.pathCredentials))
-            fs.mkdirSync(consts.pathCredentials);
-    }
-
-    /**
-     * Проверка наличия токена
-     * @returns {boolean} Токен существует
-     */
-    this.checkToken = () => {
-        this.createCredentialFolder();
-        return fs.existsSync( path.join(consts.pathCredentials, 'token') );
-    }
-
-    
+    var Token = new YandexToken(consts);
 }
 module.exports = Yandex;
 

@@ -57,6 +57,11 @@ switch (Consts.command) {
         Write.console.warning('В разработке');
         break;
 
+    // Обработка схемы
+    case 'url':
+        
+        break;
+
     // Вывод справки
     case 'help':
         console.log( Write.bold(Write.green('  push [repo]')) + Write.reset(Write.white(' - Отправка данных на сервер.\n' + 
@@ -67,11 +72,6 @@ switch (Consts.command) {
         console.log( Write.bold(Write.green('  clone')) + Write.yellow(' <project> <repo>') + Write.reset(Write.white(' - Загрузить и клонировать репозиторий \'repo\' из проекта \'project\' с сервера.')) );
         console.log( Write.bold(Write.green('  clear')) + Write.reset(Write.white(' - Удалить локальную копию репозитория.')) );
         console.log( Write.bold(Write.green('  clear-all')) + Write.reset(Write.white(' - Удалить локальные копии всех репозиториев.')) );
-        break;
-
-    // Обработка схемы
-    case 'url':
-        
         break;
 
     default:
