@@ -59,7 +59,7 @@ switch (Consts.command) {
 
     // Обработка схемы
     case 'url':
-        
+        Write.file.correct('Работает');
         break;
 
     // Вывод справки
