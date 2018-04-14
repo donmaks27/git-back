@@ -10,6 +10,8 @@ then
 else
     if ! `touch $dirApp/local/bin/git-back 2> /dev/null`
     then
+        echo "Добавление в PATH..."
+
         mkdir -p $dirApp/local/bin/
         echo 'export LOCAL_APP="'$dirApp'/local/bin/"' >> ~/.bashrc
         echo 'export PATH="$LOCAL_APP;$PATH"' >> ~/.bashrc
