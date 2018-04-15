@@ -1,7 +1,17 @@
 // Модуль для работы с токенами
 
+/**
+ * Идентификатор приложения
+ * @typedef {{id: string, secret: string}} AppID 
+ */
+/**
+ * Данные токена
+ * @typedef {{token: string, refresh_token: string, expire: number, create_time: Date}} Token 
+ */
+
 var fs = require('fs');
 var path = require('path');
+var readline = require('readline');
 var https = require('https');
 var opn = require('opn');
 var url = require('url');
@@ -11,112 +21,128 @@ var consts = require('./consts');
 
 /**
  * Конструктор
- * @param {consts} consts Константы
+ * @param {consts} Consts Константы
  */
-function YandexToken (consts) {
+function YandexToken (Consts) {
+
+    /* ПРОВЕРКИ */
+
     /**
      * Проверка наличия токена
      * @returns {boolean} Токен существует
      */
-    this.checkToken = () => {
-        createCredentialFolder();
-        return fs.existsSync( path.join(consts.pathCredentials, 'token') );
+    var CheckToken = () => {
+        return fs.existsSync(Consts.pathToken);
     }
 
     /**
-     * Получить токен приложения
-     * @param {(error: boolean, token: Token) => void} callback Функция обратного вызова
+     * Проверка идентификатора приложения
+     * @returns {boolean} Идентификатор существует
      */
-    this.getToken = callback => {
-        if ((typeof callback === 'function') && this.checkToken())
-            fs.readFile( path.join(consts.pathCredentials, 'token'), (error, data) => {
-                if (error) {
-                    Write.error(error.message, error.code);
-                    callback(true);
-                }
-                else {
+    var CheckAppID = () => {
+        return fs.existsSync(Consts.pathAppID);
+    }
+
+    /* ПОЛУЧЕНИЕ ДАННЫХ ИЗ ФАЙЛОВ */
+
+    /**
+     * Получить токен приложения
+     * @param {(error: boolean, token: string) => void} callback Функция обратного вызова
+     */
+    var GetToken = callback => {
+        if (!CheckToken()) {
+            Write.file.error('Отсутствует токен приложения, получение токена...');
+            SendCodeRequest();
+            if (typeof callback === 'function')
+                callback(true);
+        }
+        else {
+            fs.readFile(Consts.pathToken, (error, data) => {
+                if (!error) {
                     data = JSON.parse(data);
                     if (data.token && data.refresh_token && data.expire && data.create_time) {
                         let time = new Date().getTime() - data.expire;
                         if (time >= data.create_time - 60*30) {
-                            Write.console.error('Токен просрочен, получение нового...');
-                            this.sendCodeRequest();
+                            Write.file.error('Токен просрочен, получение нового...');
+                            SendCodeRequest();
+                            if (typeof callback === 'function')
+                                callback(true);
                         }
-                        else if (time >= data.create_time + 60*60*24*14) {
-                            Write.console.warning('Срок жизни токена скоро истечет, получение нового...');
-                            sendRefreshTokenRequest(data, callback);
+                        else if (time >= data.create_time + 60*60*24*7) {
+                            Write.file.warning('Срок жизни токена скоро истечет, получение нового...');
+                            SendRefreshTokenRequest(data, callback);
                         }
-                        else
-                            callback(false, data);
-                    }
-                    else {
-                        Write.error('Неверный формат токена');
-                        callback(true);
+                        else if (typeof callback === 'function')
+                            callback(false, data.token);
                     }
                 }
+                else {
+                    Write.file.error(error.message, error.code);
+                    if (typeof callback === 'function')
+                        callback(true);
+                }
             });
-    }
-
-    /**
-     * Проверка данных приложения
-     */
-    this.checkAppID = () => {
-        createCredentialFolder();
-        return fs.existsSync( path.join(consts.pathCredentials, 'appID') );
+        }
     }
 
     /**
      * Получить идентификатор приложения
-     * @param {(error: string, appID: AppID) => void} callback Функция обратного вызова
+     * @param {(error: boolean, appID: AppID) => void} callback Функция обратного вызова
      */
-    this.getAppID = callback => {
-        if ((typeof callback === 'function') && this.checkAppID())
-            fs.readFile( path.join(consts.pathCredentials, 'appID'), (error, data) => {
-                if (error) {
-                    Write.error(error.message, error.code);
-                    callback(true);
-                }
-                else {
+    var GetAppID = callback => {
+        if ((typeof callback === 'function') && CheckAppID()) {
+            fs.readFile(Consts.pathAppID, (error, data) => {
+                if (!error) {
                     data = JSON.parse(data);
                     if (data.id && data.secret)
                         callback(false, data);
                     else {
-                        Write.error('Неверный формат appID');
+                        Write.file.error('Неверный формат appID');
                         callback(true);
                     }
                 }
+                else {
+                    Write.file.error(error.message, error.code);
+                    callback(true);
+                }
             });
+        }
+        else {
+            Write.file.error('Отсутствует appID');
+            callback(true);
+        }
     }
+
+    /* ЗАПРОСЫ */
 
     /**
      * Отправить запрос на получение кода для отправки запроса на получение токена
      */
-    this.sendCodeRequest = () => {
-        this.getAppID((error, appID) => {
+    var SendCodeRequest = () => {
+        GetAppID((error, appID) => {
             if (!error) {
                 let params = [
                     'response_type=code',
-                    'client_id=' + appID.id,
-                    'force_confirm=yes'
+                    'client_id=' + appID.id
                 ];
                 opn('https://oauth.yandex.ru/authorize?' + params.join('&'), {
                     wait: false
                 });
             }
             else
-                Write.console.error('Ошибка чтения AppID');
+                Write.file.error('Ошибка чтения appID');
         });
     }
 
     /**
-     * Вытащить токен из URL
-     * @param {string} urlResponse Поученный URL
+     * Вытащить код из URL
+     * @param {string} urlResponse Полученный URL
      */
-    this.getCodeFromUrl = (urlResponse) => {
+    var GetCodeFromUrl = (urlResponse) => {
         let urlObject = url.parse(urlResponse);
         if ((urlObject.protocol == 'git-back:') && (urlObject.hostname == 'token') && urlObject.query) {
             urlObject = urlObject.query.split('&');
-            
+
             let params = {};
             for (let i = 0; i < urlObject.length; i++) {
                 let temp = urlObject[i].split('=');
@@ -124,40 +150,31 @@ function YandexToken (consts) {
             }
 
             if (params.error)
-                Write.console.error(params.error_description, params.error);
+                Write.file.error(params.error_description, params.error);
             else 
-                sendTokenRequest(params.code);
+                SendTokenRequest(params.code);
         }
         else
-            Write.console.error('Неверный формат URL');
-    }
-
-    /* ЛОКАЛЬНЫЕ ФУНКЦИИ */
-
-    /**
-     * Создать папку с данными авторизации
-     */
-    var createCredentialFolder = () => {
-        if (fs.existsSync(consts.pathCredentials))
-            fs.mkdirSync(consts.pathCredentials);
+            Write.file.error('Неверный формат URL');
     }
 
     /**
      * Отправить запрос на получение токена
      * @param {string} code Полученный код
      */
-    var sendTokenRequest = function (code) {
-        this.getAppID((error, appID) => {
+    var SendTokenRequest = function (code) {
+        GetAppID((error, appID) => {
             if (!error) {
                 let params = [
                     'grant_type=authorization_code',
                     'code=' + code
                 ];
-                params.join('&');
-
+                params = params.join('&');
+                
                 let request = https.request({
                     method: 'POST',
                     host: 'oauth.yandex.ru',
+                    path: '/token',
                     headers: {
                         'Content-type': 'application/x-www-form-urlencoded',
                         'Content-Length': Buffer.byteLength(params),
@@ -170,8 +187,9 @@ function YandexToken (consts) {
                     response.on('data', function (chunk) {
                         body += chunk;
                     });
-
+                    
                     response.on('end', () => {
+                        Write.file.correct(body);
                         let json = JSON.parse(body);
                         if (response.statusCode == 200) {
                             let obj = {
@@ -180,27 +198,26 @@ function YandexToken (consts) {
                                 expire: json.expires_in,
                                 create_time: new Date().getTime()
                             }
-                            fs.writeFile( path.join(consts.pathCredentials, 'token'), JSON.stringify(obj), error => {
+                            fs.writeFile(Consts.pathToken, JSON.stringify(obj), error => {
                                 if (!error)
-                                    Write.console.correct('Токен получен');
+                                    Write.file.correct('Токен получен');
                                 else
-                                    Write.console.error('Не удалось записать токен. ' + error.message, error.code);
+                                    Write.file.error(error.message, error.code);
                             });
                         }
                         else
-                            Write.console.error(json.error_description, json.error);
+                            Write.file.error(json.error_description, json.error);
                     });
                 });
-
+                
                 request.on('error', function (error) {
-                    Write.console.error(error.message);
+                    Write.file.error("Request error. " + error.message);
                 });
-
-                request.write(params);
-                request.end();
+                
+                request.end(params);
             }
-            else
-                Write.console.error('Ошибка чтения appID');
+            else 
+                Write.file.error('Ошибка чтения appID');
         });
     }
 
@@ -209,18 +226,19 @@ function YandexToken (consts) {
      * @param {Token} token Текущий токен
      * @param {(error: boolean, token: Token) => void} callback Функция обратного вызова
      */
-    var sendRefreshTokenRequest = (token, callback) => {
-        this.getAppID((error, appID) => {
+    var SendRefreshTokenRequest = (token, callback) => {
+        GetAppID((error, appID) => {
             if (!error) {
                 let params = [
                     'grant_type=refresh_token',
                     'refresh_token=' + token.refresh_token
                 ];
-                params.join('&');
+                params = params.join('&');
 
                 let request = https.request({
                     method: 'POST',
                     host: 'oauth.yandex.ru',
+                    path: '/token',
                     headers: {
                         'Content-type': 'application/x-www-form-urlencoded',
                         'Content-Length': Buffer.byteLength(params),
@@ -243,37 +261,44 @@ function YandexToken (consts) {
                                 expire: json.expires_in,
                                 create_time: new Date().getTime()
                             }
-                            fs.writeFile( path.join(consts.pathCredentials, 'token'), JSON.stringify(obj), error => {
+                            fs.writeFile(Consts.pathToken, JSON.stringify(obj), error => {
                                 if (!error) {
-                                    Write.console.correct('Токен получен');
-                                    callback(false, obj);
+                                    Write.file.correct('Токен получен');
+                                    if (typeof callback === 'function')
+                                        callback(false, obj);
                                 }
                                 else {
-                                    Write.console.error('Не удалось записать токен. ' + error.message, error.code);
-                                    callback(true);
+                                    Write.file.error(error.message, error.code);
+                                    if (typeof callback === 'function')
+                                        callback(true);
                                 }
                             });
                         }
                         else {
-                            Write.console.error(json.error_description, json.error);
-                            callback(true);
+                            Write.file.error(json.error_description, json.error);
+                            if (typeof callback === 'function')
+                                callback(true);
                         }
                     });
                 });
 
                 request.on('error', function (error) {
-                    Write.console.error(error.message);
-                    callback(true);
+                    Write.file.error(error.message);
+                    if (typeof callback === 'function')
+                        callback(true);
                 });
 
-                request.write(params);
-                request.end();
+                request.end(params);
             }
             else {
-                Write.console.error('Ошибка чтения AppID');
-                callback(true);
+                Write.file.error('Ошибка чтения AppID');
+                if (typeof callback === 'function')
+                    callback(true);
             }
         });
     }
+
+    this.getToken = GetToken;
+    this.getCodeFromUrl = GetCodeFromUrl;
 }
 module.exports = YandexToken;

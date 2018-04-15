@@ -3,9 +3,8 @@ var path = require('path');
 const Write = require('./color_write'); 
 const Consts = new (require('./consts'))();
 const Repo = new (require('./repoWorker'))(Consts);
-const Yandex = new (require('./yandexWorker'))(Consts);
-
-
+const YandexToken = new (require('./yandexToken'))(Consts);
+const Yandex = new (require('./yandex'))(Consts, Repo, YandexToken);
 
 switch (Consts.command) {
     // Отправка репозитория на сервер
@@ -21,14 +20,16 @@ switch (Consts.command) {
             // Упаковка локальной копии репозитория в архив
             Repo.packLocalRepo(() => {
                 // Отправка архива на сервер
-                /*Yandex.sendLocalRepoArchive(function (error) {
+                Yandex.sendLocalRepoArchive(function (error) {
                     if (error) Write.console.error('Ошибка отправки данных');
                     else       Write.console.correct('Данные успешно отправлены');
                     // Удаление архива
                     Repo.deleteLocalRepoArchive();
-                });*/
+                });
             });
         }
+        else 
+            Write.console.error('Данная директория не содержит git репозитория');
         break;
         
     // Получение репозитория с сервера
@@ -51,7 +52,6 @@ switch (Consts.command) {
         Write.console.warning('В разработке');
         break;
 
-    
     // Удалить локальную копию репозитория
     case 'clear-all':
         Write.console.warning('В разработке');
@@ -59,7 +59,8 @@ switch (Consts.command) {
 
     // Обработка схемы
     case 'url':
-        Write.file.correct('Работает');
+        YandexToken.getCodeFromUrl(Consts.arg1);
+        //Write.file.info(Consts.arg1);
         break;
 
     // Вывод справки
@@ -72,6 +73,7 @@ switch (Consts.command) {
         console.log( Write.bold(Write.green('  clone')) + Write.yellow(' <project> <repo>') + Write.reset(Write.white(' - Загрузить и клонировать репозиторий \'repo\' из проекта \'project\' с сервера.')) );
         console.log( Write.bold(Write.green('  clear')) + Write.reset(Write.white(' - Удалить локальную копию репозитория.')) );
         console.log( Write.bold(Write.green('  clear-all')) + Write.reset(Write.white(' - Удалить локальные копии всех репозиториев.')) );
+        console.log( Write.bold(Write.green('  url')) + Write.yellow(' <url>') + Write.reset(Write.white(' - Обработка URL схемы \'git-back://\'.')) );
         break;
 
     default:

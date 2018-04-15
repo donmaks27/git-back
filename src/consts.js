@@ -12,15 +12,30 @@ function Consts () {
      */
     this.pathReposServer = '/git';
     /**
+     * Путь к папке с приложением
+     * @type {string}
+     */
+    this.pathApp = path.dirname(__dirname);
+    /**
      * Путь к локальной папке с репозиториями
      * @type {string}
      */
-    this.pathReposLocal = path.join(path.dirname(__dirname), 'data');
+    this.pathReposLocal = path.join(this.pathApp, 'data');
     /**
      * Путь к папке с данными авторизации
      * @type {string}
      */
-    this.pathCredentials = path.join(path.dirname(__dirname), 'credentials');
+    this.pathCredentials = path.join(this.pathApp, 'credentials');
+    /**
+     * Путь к файлу с appID
+     * @type {string}
+     */
+    this.pathAppID = path.join(this.pathCredentials, 'appID.json');
+    /**
+     * Путь к файлу с токеном
+     * @type {string}
+     */
+    this.pathToken = path.join(this.pathCredentials, 'token.json');
     /**
      * Путь к текущей директории, из которой вызывается git-back
      * @type {string}

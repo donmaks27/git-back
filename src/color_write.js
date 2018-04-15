@@ -189,7 +189,7 @@ function GetCorrectPrefix () {
  * Получить префикс для строки с информацией
  * @returns {string} Префикс для строки с информацией
  */
-function GetInfoMsg () {
+function GetInfoPrefix () {
     return '  [INF] ';
 }
 
@@ -222,8 +222,8 @@ function GetCodeStr (code) {
 function GetLogFilePath (date) {
     if (!date)
         date = new Date();
-    let month = date.getMonth();
-    let day = date.getDay();
+    let month = date.getMonth()+1;
+    let day = date.getDate();
 
     let nameLog = 'log-' + date.getFullYear() + 
                   '-' + (month < 10 ? '0' : '') + month + 

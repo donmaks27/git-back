@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd `dirname $0` && cd ../
+cd `dirname $0` && cd ../src
 dir=`pwd`
 
 dirApp=~/.local
@@ -8,13 +8,14 @@ if [[ $EUID -eq 0 ]]
 then
     dirApp=/usr
 else
-    if ! `touch $dirApp/local/bin/git-back 2> /dev/null`
+    dirLocalApp=
+
+    if [ ! -d "$dirApp/local/bin/" ]
     then
         echo "Добавление в PATH..."
 
         mkdir -p $dirApp/local/bin/
-        echo 'export LOCAL_APP="'$dirApp'/local/bin/"' >> ~/.bashrc
-        echo 'export PATH="$LOCAL_APP;$PATH"' >> ~/.bashrc
+        echo 'export PATH="'$dirApp'/local/bin/:$PATH"' >> ~/.bashrc
 
         echo "  Пути добавленны в PATH, изменения вступят в силу после выхода из системы или перезагрузки"
     fi
@@ -43,3 +44,8 @@ chmod 755 $fileDesktop
 echo "  Добавление обработчика схемы..."
 
 xdg-mime default git-back-url.desktop x-scheme-handler/git-back
+
+echo "  Установка модулей..."
+
+cd ..
+scripts/install-modules.sh

@@ -21,12 +21,7 @@ function Repo (consts) {
      * @returns {boolean} Является ли текущая директория git репозиторием
      */
     this.checkCurrentRepo = () => {
-        if ( !fs.existsSync(path.join(consts.pathCurrent, '.git')) ) {
-            Write.console.error('Данная директория не содержит git репозитория');
-            return false;
-        }
-        else
-            return true;
+        return fs.existsSync(path.join(consts.pathCurrent, '.git'));
     }
     /**
      * Проверка на существование локальной копии репозитория
@@ -54,7 +49,7 @@ function Repo (consts) {
             // Если не создана папка с локальным проектом
             if (!fs.existsSync(consts.pathLocalProject)) {
                 fs.mkdirSync(consts.pathLocalProject);
-                Write.console.info('Создана папка для проекта');
+                Write.file.info('Создана папка для проекта');
             }
             // Клонирование голого репозитория
             child_process.spawnSync('git', ['clone', '--bare', consts.pathCurrent], {
@@ -118,7 +113,7 @@ function Repo (consts) {
             });
         }
         else
-            Write.console.error('Не найдена локальная копия репозитория');
+            Write.file.error('Не найдена локальная копия репозитория');
     }
 
     /* РАБОТА С ЛОКАЛЬНОЙ КОПИЕЙ РЕПОЗИТОРИЯ */
@@ -137,7 +132,7 @@ function Repo (consts) {
                 cwd: consts.pathLocalProject,
                 gzip: true
             }, [consts.nameLocalRepo]).pipe(fs.createWriteStream(consts.pathLocalRepoArchive)).on('finish', () => {
-                Write.console.info('Локальный репозиторий заархивирован');
+                Write.file.info('Локальный репозиторий заархивирован');
                 callback();
             });
         }
@@ -146,7 +141,7 @@ function Repo (consts) {
      * Распаковка репозитория
      * @param {() => void} callback Функция обратного вызова
      */
-    this.packLocalRepo = callback => {
+    this.unpackLocalRepo = callback => {
         // Если архив существует и указан колбэк
         if (this.checkLocalRepoArchive() && (typeof callback === 'function')) {
             // Удалить папку с локальной копией репозитория
@@ -155,7 +150,7 @@ function Repo (consts) {
             fs.createReadStream(consts.pathLocalRepoArchive).pipe(tar.extract({
                 cwd: consts.pathLocalProject
             })).on('finish', () => {
-                Write.console.info('Репозиторий разархивирован');
+                Write.file.info('Репозиторий разархивирован');
                 // Удаление архива
                 this.deleteLocalRepoArchive();
                 callback();
@@ -168,7 +163,7 @@ function Repo (consts) {
     this.deleteLocalRepo = () => {
         if (this.checkLocalRepo()) {
             DeleteDir(consts.pathLocalRepo);
-            Write.console.info('Локальный репозиторий удален');
+            Write.file.info('Локальный репозиторий удален');
         }
     }
     /**
@@ -177,7 +172,7 @@ function Repo (consts) {
     this.deleteLocalRepoArchive = () => {
         if (this.checkLocalRepoArchive()) {
             fs.unlinkSync(consts.pathLocalRepoArchive);
-            Write.console.info('Архив удален');
+            Write.file.info('Архив удален');
         }
     }
 }

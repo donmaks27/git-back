@@ -1,7 +1,6 @@
 bin/
 log/
 data/
-credentials/
 
 node_modules/
 package-lock.json
