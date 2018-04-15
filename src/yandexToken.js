@@ -11,7 +11,6 @@
 
 var fs = require('fs');
 var path = require('path');
-var readline = require('readline');
 var https = require('https');
 var opn = require('opn');
 var url = require('url');

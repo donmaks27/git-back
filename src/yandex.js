@@ -7,7 +7,7 @@ var url = require('url');
 
 const Write = require('./color_write');
 var Consts = require('./consts');
-var RepoWorker = require('./repoWorker');
+var RepoWorker = require('./repo');
 var YandexToken = require('./yandexToken');
 
 /**
@@ -17,15 +17,18 @@ var YandexToken = require('./yandexToken');
  * @param {YandexToken} Token Модуль для работы с токенами
  */
 function Yandex (Consts, Repo, Token) {
+
+    /* РАБОТА С РЕПОЗИТОРИЯМИ */
+
     /**
      * Отправить запакованную локальную копию репозитория на сервер
      * @param {(error: boolean) => void} callback Функция обратного вызова
      */
-    this.sendLocalRepoArchive = callback => {
+    var SendLocalRepoArchive = callback => {
         if (typeof callback === 'function') {
             if (Repo.checkLocalRepoArchive()) {
                 // Получить URL для отправки
-                getSendURL((error, href) => {
+                GetSendURL((error, href) => {
                     if (!error) {
                         let urlObject = url.parse(href);
                         let request = https.request({
@@ -35,8 +38,10 @@ function Yandex (Consts, Repo, Token) {
                             path: urlObject.path
                         }, response => {
                             // Файл отправлен
-                            if ((response.statusCode == 201) || (response.statusCode == 202))
+                            if ((response.statusCode == 201) || (response.statusCode == 202)) {
+                                Write.file.correct('Файл  отправлен', response.statusCode);
                                 callback(false);
+                            }
                             else {
                                 Write.file.error('Ошибка отправки файла', response.statusCode);
                                 callback(true);
@@ -67,13 +72,58 @@ function Yandex (Consts, Repo, Token) {
     }
 
     /**
-     * Получить ссылку для загрузки данных
+     * Получить с сервера запакованный репозиторий
+     * @param {(error: boolean) => void} callback Функция обратного вызова
+     */
+    var ReceiveServerRepoArchive = callback => {
+        if (typeof callback === 'function') {
+            // Получить ссылку для скачивания
+            GetReceiveURL((error, href) => {
+                if (!error) {
+                    let urlObject = url.parse(href);
+                    let request = https.request({
+                        method: 'GET',
+                        hostname: urlObject.hostname,
+                        port: urlObject.port,
+                        path: urlObject.path
+                    }, response => {
+                        if (response.statusCode == 200)
+                            // Извлечение файла
+                            response.pipe(fs.createWriteStream(Consts.pathLocalRepoArchive)).on('finish', () => {
+                                Write.file.correct('Файл получен', response.statusCode);
+                                callback(false);
+                            });
+                        else {
+                            Write.file.error('Ошибка загрузки файла', response.statusCode);
+                            callback(true);
+                        }
+                    });
+
+                    request.on('error', function (error) {
+                        Write.file.error(error.message);
+                        callback(true);
+                    });
+    
+                    request.end();
+                }
+                else {
+                    Write.file.error('Ошибка получения ссылки для получения файла');
+                    callback(true);
+                }
+            });
+        }
+    }
+
+    /* ПОЛУЧЕНИЕ ССЫЛОК */
+
+    /**
+     * Получить ссылку для отправки данных
      * @param {(error: boolean, href: string) => void} callback Функция обратного вызова
      */
-    var getSendURL = callback => {
+    var GetSendURL = callback => {
         if (typeof callback === 'function') {
             // Создать на сервере папку с проектом
-            createProjectServerDirectory((error, token) => {
+            CreateProjectServerDirectory((error, token) => {
                 if (!error) {
                     let params = [
                         'path=' + Consts.pathReposServer + '/' + Consts.nameLocalProject + '/' + Consts.nameLocalRepoArchive,
@@ -98,8 +148,10 @@ function Yandex (Consts, Repo, Token) {
 
                         response.on('end', function () {
                             let json = JSON.parse(body);
-                            if (response.statusCode == 200)
+                            if (response.statusCode == 200) {
+                                Write.file.info('Ссылка для отправки получена');
                                 callback(false, json.href);
+                            }
                             else {
                                 Write.file.error(json.message, response.statusCode);
                                 callback(true);
@@ -123,10 +175,114 @@ function Yandex (Consts, Repo, Token) {
     }
 
     /**
+     * Получить ссылку для получения данных
+     * @param {(error: boolean, href: string) => void} callback Функция обратного вызова
+     */
+    var GetReceiveURL = callback => {
+        if (typeof callback === 'function') {
+            // Получить токет для авторизации
+            Token.getToken((error, token) => {
+                if (!error) {
+                    let params = [
+                        'path=' + Consts.pathReposServer + '/' + Consts.nameLocalProject + '/' + Consts.nameLocalRepoArchive
+                    ];
+                    let url = '/v1/disk/resources/download?' + params.join('&');
+
+                    let request = https.request({
+                        method: 'GET',
+                        host: 'cloud-api.yandex.net',
+                        path: url,
+                        headers: {
+                            Authorization: 'OAuth ' + token
+                        }
+                    }, response => {
+                        // Чтение тела ответа
+                        response.setEncoding('utf-8');
+                        let body = '';
+                        response.on('data', function (chunk) {
+                            body += chunk;
+                        });
+    
+                        response.on('end', function () {
+                            let json = JSON.parse(body);
+                            if (response.statusCode == 200) {
+                                Write.file.info('Ссылка для скачивания получена');
+                                callback(false, json.href);
+                            }
+                            else {
+                                Write.file.error(json.message, response.statusCode);
+                                callback(true);
+                            }
+                        });
+                    });
+    
+                    request.on('error', function (error) {
+                        Write.file.error(error.message);
+                        callback(true);
+                    });
+    
+                    request.end();
+                }
+                else {
+                    Write.file.error('Ошибка получения токена');
+                    callback(true);
+                }
+            });
+        }
+        /*if (typeof callback === 'function')
+        // Получить токет для авторизации
+        GetToken((error, token) => {
+            if (!error) {
+                let params = [
+                    'path=' + pathReposServer + '/' + nameLocalProject + '/' + nameLocalRepoArchive
+                ];
+                let url = '/v1/disk/resources/download?' + params.join('&');
+
+                let request = https.request({
+                    method: 'GET',
+                    host: 'cloud-api.yandex.net',
+                    path: url,
+                    headers: {
+                        Authorization: 'OAuth ' + token
+                    }
+                }, response => {
+                    // Чтение тела ответа
+                    response.setEncoding('utf-8');
+                    let body = '';
+                    response.on('data', function (chunk) {
+                        body += chunk;
+                    });
+
+                    response.on('end', function () {
+                        let json = JSON.parse(body);
+                        if (response.statusCode == 200)
+                            callback(false, json);
+                        else {
+                            Write.error('Ошибка получения ссылки. ' + json.message, response.statusCode);
+                            callback(true);
+                        }
+                    });
+                });
+
+                request.on('error', function (error) {
+                    Write.error(error.message);
+                    callback(true);
+                });
+
+                request.end();
+            }
+            else
+                callback(true);
+        });*/
+    }
+
+    /* УПРАВЛЕНИЕ ДИСКОМ */
+
+    /**
      * Создать на сервере папку с проектом
      * @param {(error: boolean, token: string)} callback 
      */
-    var createProjectServerDirectory = callback => {
+    var CreateProjectServerDirectory = callback => {
         if (typeof callback === 'function') {
             // Получить токет для авторизации
             Token.getToken((error, token) => {
@@ -173,5 +329,8 @@ function Yandex (Consts, Repo, Token) {
             });
         }
     }
+
+    this.sendLocalRepoArchive = SendLocalRepoArchive;
+    this.receiveServerRepoArchive = ReceiveServerRepoArchive;
 }
 module.exports = Yandex;

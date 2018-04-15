@@ -2,7 +2,7 @@ var path = require('path');
 
 const Write = require('./color_write'); 
 const Consts = new (require('./consts'))();
-const Repo = new (require('./repoWorker'))(Consts);
+const Repo = new (require('./repo'))(Consts);
 const YandexToken = new (require('./yandexToken'))(Consts);
 const Yandex = new (require('./yandex'))(Consts, Repo, YandexToken);
 
@@ -20,7 +20,7 @@ switch (Consts.command) {
             // Упаковка локальной копии репозитория в архив
             Repo.packLocalRepo(() => {
                 // Отправка архива на сервер
-                Yandex.sendLocalRepoArchive(function (error) {
+                Yandex.sendLocalRepoArchive(error => {
                     if (error) Write.console.error('Ошибка отправки данных');
                     else       Write.console.correct('Данные успешно отправлены');
                     // Удаление архива
@@ -34,7 +34,34 @@ switch (Consts.command) {
         
     // Получение репозитория с сервера
     case 'pull':
-        Write.console.warning('В разработке');
+        Consts.setNames( path.basename(path.dirname(Consts.pathCurrent)), path.basename(Consts.pathCurrent) );
+        // Проверка на корректность текущей директории
+        if (Repo.checkCurrentRepo()) {
+            // Удаление архива, если есть
+            Repo.deleteLocalRepoArchive();
+            // Получение с архива сервера
+            Yandex.receiveServerRepoArchive(error => {
+                if (!error) {
+                    Write.console.correct('Данные успешно загружены');
+                    // Если не было локальной копии репозитория, то установить источник на скаченный
+                    let change = Repo.checkLocalRepo();
+                    // Распаковка архива с локальной копией репозитория
+                    Repo.unpackLocalRepo(() => {
+                        // Установка источника
+                        if (change)
+                            Repo.changeCurrentRepoServer();
+                        if (Consts.arg1 != 'repo')
+                            Repo.pullLocalToCurrent();
+                    });
+                }
+                else {
+                    Write.console.error('Ошибка загрузки данных');
+                    Repo.deleteLocalRepoArchive();
+                }
+            });
+        }
+        else 
+            Write.console.error('Данная директория не содержит git репозитория');
         break;
 
     // Список репозиториев на сервере
@@ -60,7 +87,6 @@ switch (Consts.command) {
     // Обработка схемы
     case 'url':
         YandexToken.getCodeFromUrl(Consts.arg1);
-        //Write.file.info(Consts.arg1);
         break;
 
     // Вывод справки

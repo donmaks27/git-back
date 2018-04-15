@@ -10,9 +10,9 @@ var consts = require('./consts');
 
 /**
  * Конструктор
- * @param {consts} consts Константы
+ * @param {consts} Consts Константы
  */
-function Repo (consts) {
+function Repo (Consts) {
 
     /* ПРОВЕРКИ */
 
@@ -20,22 +20,24 @@ function Repo (consts) {
      * Проверка на существования репозитория в текущей папке
      * @returns {boolean} Является ли текущая директория git репозиторием
      */
-    this.checkCurrentRepo = () => {
-        return fs.existsSync(path.join(consts.pathCurrent, '.git'));
+    var CheckCurrentRepo = () => {
+        return fs.existsSync(path.join(Consts.pathCurrent, '.git'));
     }
+
     /**
      * Проверка на существование локальной копии репозитория
      * @returns {boolean} Создана ли локальная копия репозитория
      */
-    this.checkLocalRepo = () => {
-        return fs.existsSync(consts.pathLocalRepo);
+    var CheckLocalRepo = () => {
+        return fs.existsSync(Consts.pathLocalRepo);
     }
+
     /**
      * Проверка на существование архива локальной копии репозитория
      * @returns {boolean} Создан ли архив локальной копии репозитория
      */
-    this.checkLocalRepoArchive = () => {
-        return fs.existsSync(consts.pathLocalRepoArchive);
+    var CheckLocalRepoArchive = () => {
+        return fs.existsSync(Consts.pathLocalRepoArchive);
     }
 
     /* GIT комманды */
@@ -43,72 +45,76 @@ function Repo (consts) {
     /**
      * Клонирование текущего репозитория в локальную копию
      */
-    this.cloneCurrentToLocal = () => {
+    var CloneCurrentToLocal = () => {
         // Если локальной копии репозитория нет
-        if (!this.checkLocalRepo()) {
+        if (!CheckLocalRepo()) {
             // Если не создана папка с локальным проектом
-            if (!fs.existsSync(consts.pathLocalProject)) {
-                fs.mkdirSync(consts.pathLocalProject);
+            if (!fs.existsSync(Consts.pathLocalProject)) {
+                fs.mkdirSync(Consts.pathLocalProject);
                 Write.file.info('Создана папка для проекта');
             }
             // Клонирование голого репозитория
-            child_process.spawnSync('git', ['clone', '--bare', consts.pathCurrent], {
-                cwd: consts.pathLocalProject,
+            child_process.spawnSync('git', ['clone', '--bare', Consts.pathCurrent], {
+                cwd: Consts.pathLocalProject,
                 stdio: 'inherit' // Вывод в консоль
             });
             // Изменение источника
-            this.changeCurrentRepoServer();
+            ChangeCurrentRepoServer();
         }
     }
+
     /**
      * Смена источника репозитория
      */
-    this.changeCurrentRepoServer = () => {
+    var ChangeCurrentRepoServer = () => {
         // Если локальная копия репозитория есть
-        if (this.checkLocalRepo())
+        if (CheckLocalRepo())
             // Смена источника
-            child_process.spawnSync('git', ['remote', 'set-url', 'origin', consts.pathLocalRepo], {
-                cwd: consts.pathCurrent,
+            child_process.spawnSync('git', ['remote', 'set-url', 'origin', Consts.pathLocalRepo], {
+                cwd: Consts.pathCurrent,
                 stdio: 'inherit' // Вывод в консоль
             });
     }
+
     /**
      * Отправка изменений в локальный репозиторий
      */
-    this.pushCurrentToLocal = () => {
+    var PushCurrentToLocal = () => {
         // Если локальная копия репозитория есть
-        if (this.checkLocalRepo())
+        if (CheckLocalRepo())
             // Отправка изменений
             child_process.spawnSync('git', ['push'], {
-                cwd: consts.pathCurrent,
+                cwd: Consts.pathCurrent,
                 stdio: 'inherit' // Вывод в консоль
             });
     }
+
     /**
      * Получение изменений из локального репозитория
      */
-    this.pullLocalToCurrent = () => {
+    var PullLocalToCurrent = () => {
         // Если локальная копия репозитория есть
-        if (this.checkLocalRepo())
+        if (CheckLocalRepo())
             // Получение изменений
             child_process.spawnSync('git', ['pull'], {
-                cwd: consts.pathCurrent,
+                cwd: Consts.pathCurrent,
                 stdio: 'inherit' // Вывод в консоль
             });
     }
+
     /**
      * Клонировать с локальной копии репозитория
      */
-    this.cloneLocalToCurrent = () => {
+    var CloneLocalToCurrent = () => {
         // Если локальная копия репозитория есть
-        if (this.checkLocalRepo()) {
-            let pathCurrentProject = path.join(consts.pathCurrent, consts.nameLocalProject);
+        if (CheckLocalRepo()) {
+            let pathCurrentProject = path.join(Consts.pathCurrent, Consts.nameLocalProject);
             // Создание папки с проектом, если ее еще нет
             if (!fs.existsSync(pathCurrentProject))
                 fs.mkdirSync(pathCurrentProject);
             // Клонирование репозитория
-            child_process.spawnSync('git', ['clone', consts.pathLocalRepo], {
-                cwd: consts.pathCurrentProject,
+            child_process.spawnSync('git', ['clone', Consts.pathLocalRepo], {
+                cwd: Consts.pathCurrentProject,
                 stdio: 'inherit' // Вывод в консоль
             });
         }
@@ -122,76 +128,94 @@ function Repo (consts) {
      * Архивирование репозитория
      * @param {() => void} callback Функция обратного вызова
      */
-    this.packLocalRepo = callback => {
+    var PackLocalRepo = callback => {
         // Если локальная копия репозитория есть и указан колбэк
-        if (this.checkLocalRepo() && (typeof callback === 'function')) {
+        if (CheckLocalRepo() && (typeof callback === 'function')) {
             // Удаление архива если есть
-            this.deleteLocalRepoArchive();
+            DeleteLocalRepoArchive();
             // Создание архива
             tar.create({
-                cwd: consts.pathLocalProject,
+                cwd: Consts.pathLocalProject,
                 gzip: true
-            }, [consts.nameLocalRepo]).pipe(fs.createWriteStream(consts.pathLocalRepoArchive)).on('finish', () => {
+            }, [Consts.nameLocalRepo]).pipe(fs.createWriteStream(Consts.pathLocalRepoArchive)).on('finish', () => {
                 Write.file.info('Локальный репозиторий заархивирован');
                 callback();
             });
         }
     }
+
     /**
      * Распаковка репозитория
      * @param {() => void} callback Функция обратного вызова
      */
-    this.unpackLocalRepo = callback => {
+    var UnpackLocalRepo = callback => {
         // Если архив существует и указан колбэк
-        if (this.checkLocalRepoArchive() && (typeof callback === 'function')) {
+        if (CheckLocalRepoArchive() && (typeof callback === 'function')) {
             // Удалить папку с локальной копией репозитория
-            DeleteDir(consts.pathLocalRepo);
+            DeleteDir(Consts.pathLocalRepo);
             // Распаковка архива
-            fs.createReadStream(consts.pathLocalRepoArchive).pipe(tar.extract({
-                cwd: consts.pathLocalProject
+            fs.createReadStream(Consts.pathLocalRepoArchive).pipe(tar.extract({
+                cwd: Consts.pathLocalProject
             })).on('finish', () => {
                 Write.file.info('Репозиторий разархивирован');
                 // Удаление архива
-                this.deleteLocalRepoArchive();
+                DeleteLocalRepoArchive();
                 callback();
             });
         }
     }
+
     /**
      * Удалить локальную копию репозитория
      */
-    this.deleteLocalRepo = () => {
-        if (this.checkLocalRepo()) {
-            DeleteDir(consts.pathLocalRepo);
+    var DeleteLocalRepo = () => {
+        if (CheckLocalRepo()) {
+            DeleteDir(Consts.pathLocalRepo);
             Write.file.info('Локальный репозиторий удален');
         }
     }
+
     /**
      * Удалить архив
      */
-    this.deleteLocalRepoArchive = () => {
-        if (this.checkLocalRepoArchive()) {
-            fs.unlinkSync(consts.pathLocalRepoArchive);
+    var DeleteLocalRepoArchive = () => {
+        if (CheckLocalRepoArchive()) {
+            fs.unlinkSync(Consts.pathLocalRepoArchive);
             Write.file.info('Архив удален');
         }
     }
+
+    /**
+     * Удалить директорию
+     * @param {string} dir Директория
+     */
+    var DeleteDir = dir => {
+        if (fs.existsSync(dir) && fs.statSync(dir).isDirectory()) {
+            let f = fs.readdirSync(dir);
+            for (let i in f) {
+                let name = path.join(dir, f[i]);
+                if (fs.statSync(name).isDirectory()) 
+                    DeleteDir(name);
+                else
+                    fs.unlinkSync(name);
+            }
+            fs.rmdirSync(dir);
+        }
+    }
+
+    this.checkCurrentRepo = CheckCurrentRepo;
+    this.checkLocalRepo = CheckLocalRepo;
+    this.checkLocalRepoArchive = CheckLocalRepoArchive;
+
+    this.changeCurrentRepoServer = ChangeCurrentRepoServer;
+    this.cloneCurrentToLocal = CloneCurrentToLocal;
+    this.cloneLocalToCurrent = CloneLocalToCurrent;
+    this.pushCurrentToLocal = PushCurrentToLocal;
+    this.pullLocalToCurrent = PullLocalToCurrent;
+
+    this.packLocalRepo = PackLocalRepo;
+    this.unpackLocalRepo = UnpackLocalRepo;
+
+    this.deleteLocalRepoArchive = DeleteLocalRepoArchive;
 }
 module.exports = Repo;
-
-/**
- * Удалить директорию
- * @param {string} dir Директория
- */
-function DeleteDir (dir) {
-    if (fs.existsSync(dir) && fs.statSync(dir).isDirectory()) {
-        let f = fs.readdirSync(dir);
-        for (let i in f) {
-            let name = path.join(dir, f[i]);
-            if (fs.statSync(name).isDirectory()) 
-                DeleteDir(name);
-            else
-                fs.unlinkSync(name);
-        }
-        fs.rmdirSync(dir);
-    }
-}
