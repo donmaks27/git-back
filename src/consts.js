@@ -1,6 +1,7 @@
 // Модуль для хранения данных
 
 var path = require('path');
+var fs = require('fs');
 
 function Consts () {
 
@@ -108,6 +109,9 @@ function Consts () {
         this.pathLocalProject = path.join(this.pathReposLocal, this.nameLocalProject);
         this.pathLocalRepo = path.join(this.pathLocalProject, this.nameLocalRepo);
         this.pathLocalRepoArchive = path.join(this.pathLocalProject, this.nameLocalRepoArchive);
+
+        if (!fs.existsSync(this.pathReposLocal))
+            fs.mkdirSync(this.pathReposLocal);
     }
 }
 module.exports = Consts;
