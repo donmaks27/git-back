@@ -123,7 +123,8 @@ function YandexToken (Consts) {
             if (!error) {
                 let params = [
                     'response_type=code',
-                    'client_id=' + appID.id
+                    'client_id=' + appID.id,
+                    'force_confirm=yes'
                 ];
                 opn('https://oauth.yandex.ru/authorize?' + params.join('&'), {
                     wait: false
