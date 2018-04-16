@@ -112,6 +112,8 @@ function Consts () {
 
         if (!fs.existsSync(this.pathReposLocal))
             fs.mkdirSync(this.pathReposLocal);
+        if (!fs.existsSync(this.pathLocalProject))
+            fs.mkdirSync(this.pathLocalProject);
     }
 }
 module.exports = Consts;

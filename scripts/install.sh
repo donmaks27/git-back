@@ -28,7 +28,7 @@ echo "  Создание ярлыков..."
 
 touch $fileIcon
 echo '#!/bin/bash' > $fileIcon
-echo 'node '$dir'/app $1 $2' >> $fileIcon
+echo 'node '$dir'/app $1 $2 $3' >> $fileIcon
 chmod 755 $fileIcon
 
 touch $fileDesktop

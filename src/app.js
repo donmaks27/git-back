@@ -84,7 +84,17 @@ switch (Consts.command) {
 
     // Клонировать репозиторий с сервера
     case 'clone':
-        Write.console.warning('В разработке');
+    console.log(Consts.arg1 + ' ' + Consts.arg2);
+        Consts.setNames(Consts.arg1, Consts.arg2);
+        // Удаление архива, если есть
+        Repo.deleteLocalRepoArchive();
+        // Получение с архива сервера
+        Yandex.receiveServerRepoArchive(error => {
+            if (error) Write.console.error('Ошибка загрузки данных');
+            else       Write.console.correct('Данные успешно загружены');
+            // Распаковка архива с локальной копией репозитория
+            Repo.unpackLocalRepo(Repo.cloneLocalToCurrent);
+        });
         break;
 
     // Удалить локальную копию репозитория

@@ -114,7 +114,7 @@ function Repo (Consts) {
                 fs.mkdirSync(pathCurrentProject);
             // Клонирование репозитория
             child_process.spawnSync('git', ['clone', Consts.pathLocalRepo], {
-                cwd: Consts.pathCurrentProject,
+                cwd: pathCurrentProject,
                 stdio: 'inherit' // Вывод в консоль
             });
         }
