@@ -84,7 +84,6 @@ switch (Consts.command) {
 
     // Клонировать репозиторий с сервера
     case 'clone':
-    console.log(Consts.arg1 + ' ' + Consts.arg2);
         Consts.setNames(Consts.arg1, Consts.arg2);
         // Удаление архива, если есть
         Repo.deleteLocalRepoArchive();
