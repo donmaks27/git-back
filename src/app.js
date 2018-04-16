@@ -98,7 +98,11 @@ switch (Consts.command) {
 
     // Удалить локальную копию репозитория
     case 'clear':
-        Write.console.warning('В разработке');
+        Consts.setNames( path.basename(path.dirname(Consts.pathCurrent)), path.basename(Consts.pathCurrent) );
+        // Удаление архива
+        Repo.deleteLocalRepoArchive();
+        // Удаление репозитория
+        Repo.deleteLocalRepo();
         break;
 
     // Удалить локальную копию репозитория

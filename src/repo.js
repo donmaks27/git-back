@@ -216,6 +216,7 @@ function Repo (Consts) {
     this.packLocalRepo = PackLocalRepo;
     this.unpackLocalRepo = UnpackLocalRepo;
 
+    this.deleteLocalRepo = DeleteLocalRepo;
     this.deleteLocalRepoArchive = DeleteLocalRepoArchive;
 }
 module.exports = Repo;
