@@ -107,7 +107,8 @@ switch (Consts.command) {
 
     // Удалить локальную копию репозитория
     case 'clear-all':
-        Write.console.warning('В разработке');
+        Repo.deleteAllLocalRepos();
+        Write.console.correct('Локальные копии репозиториев удалены');
         break;
 
     // Обработка схемы

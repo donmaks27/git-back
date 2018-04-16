@@ -185,6 +185,11 @@ function Repo (Consts) {
         }
     }
 
+    var DeleteAllLocalRepos = () => {
+        DeleteDir(Consts.pathReposLocal);
+        fs.mkdirSync(Consts.pathReposLocal);
+    }
+
     /**
      * Удалить директорию
      * @param {string} dir Директория
@@ -218,5 +223,6 @@ function Repo (Consts) {
 
     this.deleteLocalRepo = DeleteLocalRepo;
     this.deleteLocalRepoArchive = DeleteLocalRepoArchive;
+    this.deleteAllLocalRepos = DeleteAllLocalRepos;
 }
 module.exports = Repo;
