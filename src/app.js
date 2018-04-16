@@ -66,7 +66,20 @@ switch (Consts.command) {
 
     // Список репозиториев на сервере
     case 'list':
-        Write.console.warning('В разработке');
+        // Получение списка проектов с их репозиториями
+        Yandex.getFullReposList((error, list) => {
+            if (!error) {
+                // Проекты
+                for (let project in list) {
+                    console.log('  ' + project);
+                    // Репозитории проекта
+                    for (let repo = 0; repo < list[project].length; repo++)
+                        console.log('   - ' + list[project][repo]);
+                }
+            }
+            else
+                Write.console.error('Ошибка загрузки списка репозиториев');
+        });
         break;
 
     // Клонировать репозиторий с сервера

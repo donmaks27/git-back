@@ -60,14 +60,15 @@ function YandexToken (Consts) {
                 if (!error) {
                     data = JSON.parse(data);
                     if (data.token && data.refresh_token && data.expire && data.create_time) {
-                        let time = new Date().getTime() - data.expire;
-                        if (time >= data.create_time - 60*30) {
+                        let time = Math.round(new Date().getTime() / 1000);
+                        let expireTime = data.create_time + data.expire;
+                        if (expireTime <= time + 60*30) {
                             Write.file.error('Токен просрочен, получение нового...');
                             SendCodeRequest();
                             if (typeof callback === 'function')
                                 callback(true);
                         }
-                        else if (time >= data.create_time + 60*60*24*7) {
+                        else if (expireTime <= time + 60*60*24*7) {
                             Write.file.warning('Срок жизни токена скоро истечет, получение нового...');
                             SendRefreshTokenRequest(data, callback);
                         }
@@ -196,7 +197,7 @@ function YandexToken (Consts) {
                                 token: json.access_token,
                                 refresh_token: json.refresh_token,
                                 expire: json.expires_in,
-                                create_time: new Date().getTime()
+                                create_time: Math.round(new Date().getTime() / 1000)
                             }
                             fs.writeFile(Consts.pathToken, JSON.stringify(obj), error => {
                                 if (!error)
@@ -206,7 +207,7 @@ function YandexToken (Consts) {
                             });
                         }
                         else
-                            Write.file.error(json.error_description, json.error);
+                            Write.file.error('Ошибка получения токена. ' + json.error_description, json.error);
                     });
                 });
                 
@@ -259,7 +260,7 @@ function YandexToken (Consts) {
                                 token: json.access_token,
                                 refresh_token: json.refresh_token,
                                 expire: json.expires_in,
-                                create_time: new Date().getTime()
+                                create_time: Math.round(new Date().getTime() / 1000)
                             }
                             fs.writeFile(Consts.pathToken, JSON.stringify(obj), error => {
                                 if (!error) {
@@ -275,7 +276,7 @@ function YandexToken (Consts) {
                             });
                         }
                         else {
-                            Write.file.error(json.error_description, json.error);
+                            Write.file.error('Ошибка обновления токена. ' + json.error_description, json.error);
                             if (typeof callback === 'function')
                                 callback(true);
                         }
