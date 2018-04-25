@@ -76,7 +76,7 @@ var path = require('path');
  * @param {number} [code] Код
  */
 function ConsoleWriteError (msg, code) {
-    ConsoleWrite( Red(GetErrorPrefix()), msg, code );
+    ConsoleWrite( GetErrorPrefix(), msg, code );
 }
 /**
  * Вывод сообщения об ошибке
@@ -93,7 +93,7 @@ function WriteError (msg, code) {
  * @param {number} [code] Код
  */
 function ConsoleWriteWarning (msg, code) {
-    ConsoleWrite( Yellow(GetWarningPrefix()), msg, code );
+    ConsoleWrite( GetWarningPrefix(), msg, code );
 }
 /**
  * Вывод предупреждения
@@ -110,7 +110,7 @@ function WriteWarning (msg, code) {
  * @param {number} [code] Код
  */
 function ConsoleWriteCorrect (msg, code) {
-    ConsoleWrite( Green(GetCorrectPrefix()), msg, code );
+    ConsoleWrite( GetCorrectPrefix(), msg, code );
 }
 /**
  * Вывод утвердительного сообщения
@@ -127,7 +127,7 @@ function WriteCorrect (msg, code) {
  * @param {number} [code] Код
  */
 function ConsoleWriteInfo (msg, code) {
-    ConsoleWrite( White(GetInfoPrefix()), msg, code );
+    ConsoleWrite( GetInfoPrefix(), msg, code );
 }
 /**
  * Вывод информации
@@ -145,7 +145,7 @@ function WriteInfo (msg, code) {
  * @param {number} [code] Код
  */
 function ConsoleWrite (prefix, msg, code) {
-    console.log( Reset(Bold( White(prefix, true) + ConcatMsg(msg, code) ), true) );
+    console.log( prefix + ConcatMsg(msg, code) );
 }
 /**
  * Вывод сообщения в файл

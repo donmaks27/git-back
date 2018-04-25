@@ -2,6 +2,7 @@
 
 var fs = require('fs');
 var path = require('path');
+var request = require('request');
 var https = require('https');
 var url = require('url');
 
@@ -80,31 +81,26 @@ function Yandex (Consts, Repo, Token) {
             // Получить ссылку для скачивания
             GetReceiveURL((error, href) => {
                 if (!error) {
-                    let urlObject = url.parse(href);
-                    let request = https.request({
-                        method: 'GET',
-                        hostname: urlObject.hostname,
-                        port: urlObject.port,
-                        path: urlObject.path
-                    }, response => {
-                        if (response.statusCode == 200)
-                            // Извлечение файла
-                            response.pipe(fs.createWriteStream(Consts.pathLocalRepoArchive)).on('finish', () => {
-                                Write.file.correct('Файл получен', response.statusCode);
-                                callback(false);
-                            });
+                    request.get(href, {
+                        json: false
+                    }, (error, response, body) => {
+                        if (!error) {
+                            if (response.statusCode == 200)
+                                // Извлечение файла
+                                response.pipe(fs.createWriteStream(Consts.pathLocalRepoArchive)).on('finish', () => {
+                                    Write.file.correct('Файл получен', response.statusCode);
+                                    callback(false);
+                                });
+                            else {
+                                Write.file.error('Ошибка загрузки файла', response.statusCode);
+                                callback(true);
+                            }
+                        }
                         else {
-                            Write.file.error('Ошибка загрузки файла', response.statusCode);
+                            Write.file.error(error.message);
                             callback(true);
                         }
                     });
-
-                    request.on('error', function (error) {
-                        Write.file.error(error.message);
-                        callback(true);
-                    });
-    
-                    request.end();
                 }
                 else {
                     Write.file.error('Ошибка получения ссылки для получения файла');
