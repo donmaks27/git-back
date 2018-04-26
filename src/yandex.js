@@ -2,8 +2,8 @@
 
 var fs = require('fs');
 var path = require('path');
-var request = require('request');
 var https = require('https');
+var request = require('request');
 var url = require('url');
 
 const Write = require('./color_write');
@@ -81,26 +81,61 @@ function Yandex (Consts, Repo, Token) {
             // Получить ссылку для скачивания
             GetReceiveURL((error, href) => {
                 if (!error) {
-                    request.get(href, {
-                        json: false
-                    }, (error, response, body) => {
-                        if (!error) {
-                            if (response.statusCode == 200)
-                                // Извлечение файла
-                                response.pipe(fs.createWriteStream(Consts.pathLocalRepoArchive)).on('finish', () => {
-                                    Write.file.correct('Файл получен', response.statusCode);
-                                    callback(false);
-                                });
-                            else {
-                                Write.file.error('Ошибка загрузки файла', response.statusCode);
+                    let urlObject = url.parse(href);
+                    let request = https.request({
+                        method: 'GET',
+                        hostname: urlObject.hostname,
+                        port: urlObject.port,
+                        path: urlObject.path
+                    }, response => {
+                        if (response.statusCode == 200)
+                            // Извлечение файла
+                            response.pipe(fs.createWriteStream(Consts.pathLocalRepoArchive)).on('finish', () => {
+                                Write.file.correct('Файл получен', response.statusCode);
+                                callback(false);
+                            });
+                        else if (response.statusCode == 302) {
+                            Write.file.info('Файл доступен по другому пути');
+                            href = response.headers.location;
+                            urlObject = url.parse(href);
+                            let request1 = https.request({
+                                method: 'GET',
+                                hostname: urlObject.hostname,
+                                port: urlObject.port,
+                                path: urlObject.path
+                            }, response => {
+                                console.log(response.headers);
+                                if (response.statusCode == 200)
+                                    // Извлечение файла
+                                    response.pipe(fs.createWriteStream(Consts.pathLocalRepoArchive)).on('finish', () => {
+                                        Write.file.correct('Файл получен', response.statusCode);
+                                        callback(false);
+                                    });
+                                else {
+                                    Write.file.error('Ошибка загрузки файла', response.statusCode);
+                                    callback(true);
+                                }
+                            });
+        
+                            request1.on('error', function (error) {
+                                Write.file.error(error.message);
                                 callback(true);
-                            }
+                            });
+            
+                            request1.end();
                         }
                         else {
-                            Write.file.error(error.message);
+                            Write.file.error('Ошибка загрузки файла', response.statusCode);
                             callback(true);
                         }
                     });
+
+                    request.on('error', function (error) {
+                        Write.file.error(error.message);
+                        callback(true);
+                    });
+    
+                    request.end();
                 }
                 else {
                     Write.file.error('Ошибка получения ссылки для получения файла');
@@ -439,51 +474,6 @@ function Yandex (Consts, Repo, Token) {
                 }
             });
         }
-        /*if (typeof callback === 'function')
-        // Получить токет для авторизации
-        GetToken((error, token) => {
-            if (!error) {
-                let params = [
-                    'path=' + pathReposServer + '/' + nameLocalProject + '/' + nameLocalRepoArchive
-                ];
-                let url = '/v1/disk/resources/download?' + params.join('&');
-
-                let request = https.request({
-                    method: 'GET',
-                    host: 'cloud-api.yandex.net',
-                    path: url,
-                    headers: {
-                        Authorization: 'OAuth ' + token
-                    }
-                }, response => {
-                    // Чтение тела ответа
-                    response.setEncoding('utf-8');
-                    let body = '';
-                    response.on('data', function (chunk) {
-                        body += chunk;
-                    });
-
-                    response.on('end', function () {
-                        let json = JSON.parse(body);
-                        if (response.statusCode == 200)
-                            callback(false, json);
-                        else {
-                            Write.error('Ошибка получения ссылки. ' + json.message, response.statusCode);
-                            callback(true);
-                        }
-                    });
-                });
-
-                request.on('error', function (error) {
-                    Write.error(error.message);
-                    callback(true);
-                });
-
-                request.end();
-            }
-            else
-                callback(true);
-        });*/
     }
 
     /* УПРАВЛЕНИЕ ДИСКОМ */
