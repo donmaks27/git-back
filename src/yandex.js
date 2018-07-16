@@ -3,7 +3,6 @@
 var fs = require('fs');
 var path = require('path');
 var https = require('https');
-var request = require('request');
 var url = require('url');
 
 const Write = require('./color_write');
@@ -104,7 +103,6 @@ function Yandex (Consts, Repo, Token) {
                                 port: urlObject.port,
                                 path: urlObject.path
                             }, response => {
-                                console.log(response.headers);
                                 if (response.statusCode == 200)
                                     // Извлечение файла
                                     response.pipe(fs.createWriteStream(Consts.pathLocalRepoArchive)).on('finish', () => {
