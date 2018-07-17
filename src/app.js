@@ -89,10 +89,18 @@ switch (Consts.command) {
         Repo.deleteLocalRepoArchive();
         // Получение с архива сервера
         Yandex.receiveServerRepoArchive( (Consts.arg3 == 'crypt') || (Consts.arg3 == 'crypt'), error => {
-            if (error) Write.console.error('Ошибка загрузки данных');
-            else       Write.console.correct('Данные успешно загружены');
-            // Распаковка архива с локальной копией репозитория
-            Repo.unpackLocalRepo(Repo.cloneLocalToCurrent);
+            if (error) 
+                Write.console.error('Ошибка загрузки данных');
+            else
+                // Распаковка архива с локальной копией репозитория
+                Repo.unpackLocalRepo(() => {
+                    if (!Repo.checkLocalRepo())
+                        Write.console.error('Ошибка распаковки данных');
+                    else {
+                        Write.console.correct('Данные успешно загружены');
+                        Repo.cloneLocalToCurrent();
+                    }
+                });
         });
         break;
 
