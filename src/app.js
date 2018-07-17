@@ -88,7 +88,7 @@ switch (Consts.command) {
         // Удаление архива, если есть
         Repo.deleteLocalRepoArchive();
         // Получение с архива сервера
-        Yandex.receiveServerRepoArchive( (Consts.arg1 == 'crypt') || (Consts.arg2 == 'crypt'), error => {
+        Yandex.receiveServerRepoArchive( (Consts.arg3 == 'crypt') || (Consts.arg3 == 'crypt'), error => {
             if (error) Write.console.error('Ошибка загрузки данных');
             else       Write.console.correct('Данные успешно загружены');
             // Распаковка архива с локальной копией репозитория
@@ -125,7 +125,8 @@ switch (Consts.command) {
                                             '             ' +                                   '   Если указан параметр \'repo\', то без внесения изменений в текущий репозиторий.\n' +
                                             '             ' +                                   '   Если указан параметр \'crypt\', то после получения данные расшифруются.')) );
         console.log( Write.bold(Write.green('  list')) + Write.reset(Write.white(' - Вывести список репозиториев на сервере.')) );
-        console.log( Write.bold(Write.green('  clone')) + Write.yellow(' <project> <repo>') + Write.reset(Write.white(' - Загрузить и клонировать репозиторий \'repo\' из проекта \'project\' с сервера.')) );
+        console.log( Write.bold(Write.green('  clone')) + Write.yellow(' <project> <repo>') + Write.green(' [crypt]') + Write.reset(Write.white(' - Загрузить и клонировать репозиторий \'repo\' из проекта \'project\' с сервера.\n' +
+                                            '       ' +                '                 ' +              '        ' +                          '   Если указан параметр \'crypt\', то после получения данные расшифруются.')) );
         console.log( Write.bold(Write.green('  clear')) + Write.reset(Write.white(' - Удалить локальную копию репозитория.')) );
         console.log( Write.bold(Write.green('  clear-all')) + Write.reset(Write.white(' - Удалить локальные копии всех репозиториев.')) );
         console.log( Write.bold(Write.green('  url')) + Write.yellow(' <url>') + Write.reset(Write.white(' - Обработка URL схемы \'git-back://\'.')) );
