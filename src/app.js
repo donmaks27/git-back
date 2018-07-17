@@ -88,7 +88,7 @@ switch (Consts.command) {
         // Удаление архива, если есть
         Repo.deleteLocalRepoArchive();
         // Получение с архива сервера
-        Yandex.receiveServerRepoArchive( (Consts.arg3 == 'crypt') || (Consts.arg3 == 'crypt'), error => {
+        Yandex.receiveServerRepoArchive( (Consts.arg3 == 'crypt'), error => {
             if (error) 
                 Write.console.error('Ошибка загрузки данных');
             else

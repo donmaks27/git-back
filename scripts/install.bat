@@ -21,7 +21,7 @@ ECHO —оздание €рлыков...
 
 IF NOT EXIST "%dirApp%\bin" MKDIR "%dirApp%\bin"
 ECHO @ECHO OFF > "%dirApp%\bin\git-back.bat"
-ECHO node %dirApp%\src\app %%1 %%2 %%3 >> "%dirApp%\bin\git-back.bat"
+ECHO node %dirApp%\src\app %%1 %%2 %%3 %%4 >> "%dirApp%\bin\git-back.bat"
 
 ECHO –егистраци€ схемы...
 
