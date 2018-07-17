@@ -103,7 +103,6 @@ var ChangeEncode = (source, encodeTarget, encodeSource) => {
 
 
 module.exports.aes = {
-    generateKey: AES_GenerateKey,
     encrypt: AES_Encrypt,
     decrypt: AES_Decrypt
 }
