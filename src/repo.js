@@ -6,7 +6,10 @@ var child_process = require('child_process');
 var tar = require('tar');
 
 const Write = require('./color_write');
+const Crypt = require('./crypt');
+
 var consts = require('./consts');
+var CYandexToken = require('./yandexToken');
 
 /**
  * Конструктор
@@ -208,6 +211,86 @@ function Repo (Consts) {
         }
     }
 
+    /**
+     * Зашифровать архив перед отправкой
+     * @param {CYandexToken} YandexToken Класс для работы с токенами
+     * @param {(error: boolean) => void} callback Функция обратного вызова
+     */
+    var EncryptLocalRepoArchive = (YandexToken, callback) => {
+        if (YandexToken && callback && (typeof callback === 'function')) {
+            YandexToken.getAppID((error, appID) => {
+                if (error) {
+                    Write.file.error('Ошибка получения идентификатора приложения');
+                    callback(true);
+                }
+                else {
+                    Write.file.info('Идентификатор приложения получен');
+                    fs.readFile(Consts.pathLocalRepoArchive, (error, data) => {
+                        if (error) {
+                            Write.file.error('Ошибка чтения локальной копии архива: ' + error.message);
+                            callback(true);
+                        }
+                        else {
+                            let key = {
+                                key: Crypt.changeEncode(Crypt.sha256(appID.id).substr(0, 32), 'binary'),
+                                iv: Crypt.changeEncode(Crypt.sha256(appID.id.split('').reverse().join('')).substr(0, 16), 'binary')
+                            };
+                            data = Buffer.from(Crypt.aes.encrypt(data.toString('binary'), key), 'binary');
+                            fs.writeFile(Consts.pathLocalRepoArchive, data, error => {
+                                if (error) {
+                                    Write.file.error('Ошибка записи в локальную копию архива: ' + error.message);
+                                    callback(true);
+                                }
+                                else
+                                    callback(false);
+                            });
+                        }
+                    });
+                }
+            });
+        }
+    }
+
+    /**
+     * Расшифровать архив после получения
+     * @param {CYandexToken} YandexToken Класс для работы с токенами
+     * @param {(error: boolean) => void} callback Функция обратного вызова
+     */
+    var DecryptLocalRepoArchive = (YandexToken, callback) => {
+        if (YandexToken && callback && (typeof callback === 'function')) {
+            YandexToken.getAppID((error, appID) => {
+                if (error) {
+                    Write.file.error('Ошибка получения идентификатора приложения');
+                    callback(true);
+                }
+                else {
+                    Write.file.info('Идентификатор приложения получен');
+                    fs.readFile(Consts.pathLocalRepoArchive, (error, data) => {
+                        if (error) {
+                            Write.file.error('Ошибка чтения локальной копии архива: ' + error.message);
+                            callback(true);
+                        }
+                        else {
+                            let key = {
+                                key: Crypt.changeEncode(Crypt.sha256(appID.id).substr(0, 32), 'binary'),
+                                iv: Crypt.changeEncode(Crypt.sha256(appID.id.split('').reverse().join('')).substr(0, 16), 'binary')
+                            };
+                            data = Buffer.from(Crypt.aes.decrypt(data.toString('binary'), key), 'binary');
+                            fs.writeFile(Consts.pathLocalRepoArchive, data, error => {
+                                if (error) {
+                                    Write.file.error('Ошибка записи в локальную копию архива: ' + error.message);
+                                    callback(true);
+                                }
+                                else
+                                    callback(false);
+                            });
+                        }
+                    });
+                }
+            });
+        }
+    }
+
     this.checkCurrentRepo = CheckCurrentRepo;
     this.checkLocalRepo = CheckLocalRepo;
     this.checkLocalRepoArchive = CheckLocalRepoArchive;
@@ -224,5 +307,8 @@ function Repo (Consts) {
     this.deleteLocalRepo = DeleteLocalRepo;
     this.deleteLocalRepoArchive = DeleteLocalRepoArchive;
     this.deleteAllLocalRepos = DeleteAllLocalRepos;
+
+    this.encryptLocalRepoArchive = EncryptLocalRepoArchive;
+    this.decryptLocalRepoArchive = DecryptLocalRepoArchive;
 }
 module.exports = Repo;

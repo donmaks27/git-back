@@ -301,5 +301,6 @@ function YandexToken (Consts) {
 
     this.getToken = GetToken;
     this.getCodeFromUrl = GetCodeFromUrl;
+    this.getAppID = GetAppID;
 }
 module.exports = YandexToken;

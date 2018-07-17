@@ -26,44 +26,53 @@ function Yandex (Consts, Repo, Token) {
      */
     var SendLocalRepoArchive = callback => {
         if (typeof callback === 'function') {
-            if (Repo.checkLocalRepoArchive()) {
-                // Получить URL для отправки
-                GetSendURL((error, href) => {
+            if (Repo.checkLocalRepoArchive())
+                // Зашифровать архив
+                Repo.encryptLocalRepoArchive(Token, error => {
                     if (!error) {
-                        let urlObject = url.parse(href);
-                        let request = https.request({
-                            method: 'PUT',
-                            hostname: urlObject.hostname,
-                            port: urlObject.port,
-                            path: urlObject.path
-                        }, response => {
-                            // Файл отправлен
-                            if ((response.statusCode == 201) || (response.statusCode == 202)) {
-                                Write.file.correct('Файл  отправлен', response.statusCode);
-                                callback(false);
+                        Write.file.info('Архив зашифрован');
+                        // Получить URL для отправки
+                        GetSendURL((error, href) => {
+                            if (!error) {
+                                let urlObject = url.parse(href);
+                                let request = https.request({
+                                    method: 'PUT',
+                                    hostname: urlObject.hostname,
+                                    port: urlObject.port,
+                                    path: urlObject.path
+                                }, response => {
+                                    // Файл отправлен
+                                    if ((response.statusCode == 201) || (response.statusCode == 202)) {
+                                        Write.file.correct('Файл  отправлен', response.statusCode);
+                                        callback(false);
+                                    }
+                                    else {
+                                        Write.file.error('Ошибка отправки файла', response.statusCode);
+                                        callback(true);
+                                    }
+                                });
+
+                                request.on('error', function (error) {
+                                    Write.file.error(error.message);
+                                    callback(true);
+                                });
+            
+                                // Добавление архива в запрос
+                                fs.createReadStream(Consts.pathLocalRepoArchive).pipe(request).on('finish', () => {
+                                    request.end();
+                                });
                             }
                             else {
-                                Write.file.error('Ошибка отправки файла', response.statusCode);
+                                Write.file.error('Ошибка получения ссылки для отправки файла');
                                 callback(true);
                             }
                         });
-
-                        request.on('error', function (error) {
-                            Write.file.error(error.message);
-                            callback(true);
-                        });
-    
-                        // Добавление архива в запрос
-                        fs.createReadStream(Consts.pathLocalRepoArchive).pipe(request).on('finish', () => {
-                            request.end();
-                        });
                     }
                     else {
-                        Write.file.error('Ошибка получения ссылки для отправки файла');
+                        Write.file.error('Ошибка шифрования архива');
                         callback(true);
                     }
                 });
-            }
             else {
                 Write.file.error('Не найден архив с локальной копией репозитория');
                 callback(true);
@@ -91,7 +100,17 @@ function Yandex (Consts, Repo, Token) {
                             // Извлечение файла
                             response.pipe(fs.createWriteStream(Consts.pathLocalRepoArchive)).on('finish', () => {
                                 Write.file.correct('Файл получен', response.statusCode);
-                                callback(false);
+                                // Расшифровка архива
+                                Repo.decryptLocalRepoArchive(Token, error => {
+                                    if (error) {
+                                        Write.file.error('Ошибка расшифровки архива');
+                                        callback(true);
+                                    }
+                                    else {
+                                        Write.file.info('Архив расшифрован');
+                                        callback(false);
+                                    }
+                                });
                             });
                         else if (response.statusCode == 302) {
                             Write.file.info('Файл доступен по другому пути');
@@ -107,7 +126,17 @@ function Yandex (Consts, Repo, Token) {
                                     // Извлечение файла
                                     response.pipe(fs.createWriteStream(Consts.pathLocalRepoArchive)).on('finish', () => {
                                         Write.file.correct('Файл получен', response.statusCode);
-                                        callback(false);
+                                        // Расшифровка архива
+                                        Repo.decryptLocalRepoArchive(Token, error => {
+                                            if (error) {
+                                                Write.file.error('Ошибка расшифровки архива');
+                                                callback(true);
+                                            }
+                                            else {
+                                                Write.file.info('Архив расшифрован');
+                                                callback(false);
+                                            }
+                                        });
                                     });
                                 else {
                                     Write.file.error('Ошибка загрузки файла', response.statusCode);
