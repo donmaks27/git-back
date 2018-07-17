@@ -275,15 +275,22 @@ function Repo (Consts) {
                                 key: Crypt.changeEncode(Crypt.sha256(appID.id).substr(0, 32), 'binary'),
                                 iv: Crypt.changeEncode(Crypt.sha256(appID.id.split('').reverse().join('')).substr(0, 16), 'binary')
                             };
-                            data = Buffer.from(Crypt.aes.decrypt(data.toString('binary'), key), 'binary');
-                            fs.writeFile(Consts.pathLocalRepoArchive, data, error => {
-                                if (error) {
-                                    Write.file.error('Ошибка записи в локальную копию архива: ' + error.message);
-                                    callback(true);
-                                }
-                                else
-                                    callback(false);
-                            });
+                            data = Crypt.aes.decrypt(data.toString('binary'), key);
+                            if (data == null) {
+                                Write.file.error('Ошибка расшифровки архива');
+                                callback(true);
+                            }
+                            else {
+                                data = Buffer.from(data, 'binary');
+                                fs.writeFile(Consts.pathLocalRepoArchive, data, error => {
+                                    if (error) {
+                                        Write.file.error('Ошибка записи в локальную копию архива: ' + error.message);
+                                        callback(true);
+                                    }
+                                    else
+                                        callback(false);
+                                });
+                            }
                         }
                     });
                 }
