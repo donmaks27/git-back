@@ -15,12 +15,12 @@ switch (Consts.command) {
             // Создание локальной копии репозитория
             Repo.cloneCurrentToLocal();
             // Если указано - отправить копию репозитория на сервер сразу, без внесения сделанных изменений
-            if (Consts.arg1 != 'repo')
+            if ((Consts.arg1 != 'repo') && (Consts.arg2 != 'repo'))
                 Repo.pushCurrentToLocal();
             // Упаковка локальной копии репозитория в архив
             Repo.packLocalRepo(() => {
                 // Отправка архива на сервер
-                Yandex.sendLocalRepoArchive(true, error => {
+                Yandex.sendLocalRepoArchive( (Consts.arg1 == 'crypt') || (Consts.arg2 == 'crypt'), error => {
                     if (error) Write.console.error('Ошибка отправки данных');
                     else       Write.console.correct('Данные успешно отправлены');
                     // Удаление архива
@@ -40,7 +40,7 @@ switch (Consts.command) {
             // Удаление архива, если есть
             Repo.deleteLocalRepoArchive();
             // Получение с архива сервера
-            Yandex.receiveServerRepoArchive(true, error => {
+            Yandex.receiveServerRepoArchive( (Consts.arg1 == 'crypt') || (Consts.arg2 == 'crypt'), error => {
                 if (!error) {
                     Write.console.correct('Данные успешно загружены');
                     // Если не было локальной копии репозитория, то установить источник на скаченный
@@ -50,7 +50,7 @@ switch (Consts.command) {
                         // Установка источника
                         if (change)
                             Repo.changeCurrentRepoServer();
-                        if (Consts.arg1 != 'repo')
+                        if ((Consts.arg1 != 'repo') && (Consts.arg2 != 'repo'))
                             Repo.pullLocalToCurrent();
                     });
                 }
@@ -88,7 +88,7 @@ switch (Consts.command) {
         // Удаление архива, если есть
         Repo.deleteLocalRepoArchive();
         // Получение с архива сервера
-        Yandex.receiveServerRepoArchive(true, error => {
+        Yandex.receiveServerRepoArchive( (Consts.arg1 == 'crypt') || (Consts.arg2 == 'crypt'), error => {
             if (error) Write.console.error('Ошибка загрузки данных');
             else       Write.console.correct('Данные успешно загружены');
             // Распаковка архива с локальной копией репозитория
@@ -118,10 +118,12 @@ switch (Consts.command) {
 
     // Вывод справки
     case 'help':
-        console.log( Write.bold(Write.green('  push [repo]')) + Write.reset(Write.white(' - Отправка данных на сервер.\n' + 
-                                            '             ' +                           '   Если указан параметр \'repo\', то без взятия сделанных изменений из текущего репозитория.')) );
-        console.log( Write.bold(Write.green('  pull [repo]')) + Write.reset(Write.white(' - Получение данных с сервера.\n' + 
-                                            '             ' +                           '   Если указан параметр \'repo\', то без внесения изменений в текущий репозиторий.')) );
+        console.log( Write.bold(Write.green('  push [repo] [crypt]')) + Write.reset(Write.white(' - Отправка данных на сервер.\n' + 
+                                            '             ' +                                   '   Если указан параметр \'repo\', то без взятия сделанных изменений из текущего репозитория.\n' +
+                                            '             ' +                                   '   Если указан параметр \'crypt\', то на сервер отправятся зашифрованные данные.')) );
+        console.log( Write.bold(Write.green('  pull [repo] [crypt]')) + Write.reset(Write.white(' - Получение данных с сервера.\n' + 
+                                            '             ' +                                   '   Если указан параметр \'repo\', то без внесения изменений в текущий репозиторий.\n' +
+                                            '             ' +                                   '   Если указан параметр \'crypt\', то после получения данные расшифруются.')) );
         console.log( Write.bold(Write.green('  list')) + Write.reset(Write.white(' - Вывести список репозиториев на сервере.')) );
         console.log( Write.bold(Write.green('  clone')) + Write.yellow(' <project> <repo>') + Write.reset(Write.white(' - Загрузить и клонировать репозиторий \'repo\' из проекта \'project\' с сервера.')) );
         console.log( Write.bold(Write.green('  clear')) + Write.reset(Write.white(' - Удалить локальную копию репозитория.')) );
