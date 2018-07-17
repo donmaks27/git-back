@@ -22,15 +22,15 @@ function Yandex (Consts, Repo, Token) {
 
     /**
      * Отправить запакованную локальную копию репозитория на сервер
+     * @param {boolean} encrypt Зашифровать ли архив перед отправкой
      * @param {(error: boolean) => void} callback Функция обратного вызова
      */
-    var SendLocalRepoArchive = callback => {
+    var SendLocalRepoArchive = (encrypt, callback) => {
         if (typeof callback === 'function') {
-            if (Repo.checkLocalRepoArchive())
-                // Зашифровать архив
-                Repo.encryptLocalRepoArchive(Token, error => {
+            if (Repo.checkLocalRepoArchive()) {
+                var encryptCallback = error => {
                     if (!error) {
-                        Write.file.info('Архив зашифрован');
+                        if (encrypt) Write.file.info('Архив зашифрован');
                         // Получить URL для отправки
                         GetSendURL((error, href) => {
                             if (!error) {
@@ -69,10 +69,15 @@ function Yandex (Consts, Repo, Token) {
                         });
                     }
                     else {
-                        Write.file.error('Ошибка шифрования архива');
+                        if (encrypt) Write.file.error('Ошибка шифрования архива');
                         callback(true);
                     }
-                });
+                };
+                if (encrypt)
+                    Repo.encryptLocalRepoArchive(Token, encryptCallback);
+                else
+                    encryptCallback(false);
+            }
             else {
                 Write.file.error('Не найден архив с локальной копией репозитория');
                 callback(true);
@@ -82,9 +87,10 @@ function Yandex (Consts, Repo, Token) {
 
     /**
      * Получить с сервера запакованный репозиторий
+     * @param {boolean} decrypt Расшифровать ли архив после получения
      * @param {(error: boolean) => void} callback Функция обратного вызова
      */
-    var ReceiveServerRepoArchive = callback => {
+    var ReceiveServerRepoArchive = (decrypt, callback) => {
         if (typeof callback === 'function') {
             // Получить ссылку для скачивания
             GetReceiveURL((error, href) => {
@@ -100,17 +106,20 @@ function Yandex (Consts, Repo, Token) {
                             // Извлечение файла
                             response.pipe(fs.createWriteStream(Consts.pathLocalRepoArchive)).on('finish', () => {
                                 Write.file.correct('Файл получен', response.statusCode);
-                                // Расшифровка архива
-                                Repo.decryptLocalRepoArchive(Token, error => {
-                                    if (error) {
-                                        Write.file.error('Ошибка расшифровки архива');
-                                        callback(true);
-                                    }
-                                    else {
-                                        Write.file.info('Архив расшифрован');
-                                        callback(false);
-                                    }
-                                });
+                                if (decrypt)
+                                    // Расшифровка архива
+                                    Repo.decryptLocalRepoArchive(Token, error => {
+                                        if (error) {
+                                            Write.file.error('Ошибка расшифровки архива');
+                                            callback(true);
+                                        }
+                                        else {
+                                            Write.file.info('Архив расшифрован');
+                                            callback(false);
+                                        }
+                                    });
+                                else
+                                    callback(false);
                             });
                         else if (response.statusCode == 302) {
                             Write.file.info('Файл доступен по другому пути');
@@ -126,17 +135,20 @@ function Yandex (Consts, Repo, Token) {
                                     // Извлечение файла
                                     response.pipe(fs.createWriteStream(Consts.pathLocalRepoArchive)).on('finish', () => {
                                         Write.file.correct('Файл получен', response.statusCode);
-                                        // Расшифровка архива
-                                        Repo.decryptLocalRepoArchive(Token, error => {
-                                            if (error) {
-                                                Write.file.error('Ошибка расшифровки архива');
-                                                callback(true);
-                                            }
-                                            else {
-                                                Write.file.info('Архив расшифрован');
-                                                callback(false);
-                                            }
-                                        });
+                                        if (decrypt)
+                                            // Расшифровка архива
+                                            Repo.decryptLocalRepoArchive(Token, error => {
+                                                if (error) {
+                                                    Write.file.error('Ошибка расшифровки архива');
+                                                    callback(true);
+                                                }
+                                                else {
+                                                    Write.file.info('Архив расшифрован');
+                                                    callback(false);
+                                                }
+                                            });
+                                        else
+                                            callback(false);
                                     });
                                 else {
                                     Write.file.error('Ошибка загрузки файла', response.statusCode);

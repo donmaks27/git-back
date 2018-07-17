@@ -20,7 +20,7 @@ switch (Consts.command) {
             // Упаковка локальной копии репозитория в архив
             Repo.packLocalRepo(() => {
                 // Отправка архива на сервер
-                Yandex.sendLocalRepoArchive(error => {
+                Yandex.sendLocalRepoArchive(true, error => {
                     if (error) Write.console.error('Ошибка отправки данных');
                     else       Write.console.correct('Данные успешно отправлены');
                     // Удаление архива
@@ -40,7 +40,7 @@ switch (Consts.command) {
             // Удаление архива, если есть
             Repo.deleteLocalRepoArchive();
             // Получение с архива сервера
-            Yandex.receiveServerRepoArchive(error => {
+            Yandex.receiveServerRepoArchive(true, error => {
                 if (!error) {
                     Write.console.correct('Данные успешно загружены');
                     // Если не было локальной копии репозитория, то установить источник на скаченный
@@ -88,7 +88,7 @@ switch (Consts.command) {
         // Удаление архива, если есть
         Repo.deleteLocalRepoArchive();
         // Получение с архива сервера
-        Yandex.receiveServerRepoArchive(error => {
+        Yandex.receiveServerRepoArchive(true, error => {
             if (error) Write.console.error('Ошибка загрузки данных');
             else       Write.console.correct('Данные успешно загружены');
             // Распаковка архива с локальной копией репозитория
