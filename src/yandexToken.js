@@ -2,7 +2,7 @@
 
 /**
  * Идентификатор приложения
- * @typedef {{id: string, secret: string}} AppID 
+ * @typedef {{id: string, secret: string, crypt?: string}} AppID 
  */
 /**
  * Данные токена

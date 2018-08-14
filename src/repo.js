@@ -218,23 +218,18 @@ function Repo (Consts) {
      */
     var EncryptLocalRepoArchive = (YandexToken, callback) => {
         if (YandexToken && callback && (typeof callback === 'function')) {
-            YandexToken.getAppID((error, appID) => {
+            GetCryptKey(YandexToken, (error, key) => {
                 if (error) {
-                    Write.file.error('Ошибка получения идентификатора приложения');
+                    Write.file.error('Ошибка получения ключа шифрования');
                     callback(true);
                 }
                 else {
-                    Write.file.info('Идентификатор приложения получен');
                     fs.readFile(Consts.pathLocalRepoArchive, (error, data) => {
                         if (error) {
                             Write.file.error('Ошибка чтения локальной копии архива: ' + error.message);
                             callback(true);
                         }
                         else {
-                            let key = {
-                                key: Crypt.changeEncode(Crypt.sha256(appID.id).substr(0, 32), 'binary'),
-                                iv: Crypt.changeEncode(Crypt.sha256(appID.id.split('').reverse().join('')).substr(0, 16), 'binary')
-                            };
                             data = Buffer.from(Crypt.aes.encrypt(data.toString('binary'), key), 'binary');
                             fs.writeFile(Consts.pathLocalRepoArchive, data, error => {
                                 if (error) {
@@ -258,23 +253,18 @@ function Repo (Consts) {
      */
     var DecryptLocalRepoArchive = (YandexToken, callback) => {
         if (YandexToken && callback && (typeof callback === 'function')) {
-            YandexToken.getAppID((error, appID) => {
+            GetCryptKey(YandexToken, (error, key) => {
                 if (error) {
-                    Write.file.error('Ошибка получения идентификатора приложения');
+                    Write.file.error('Ошибка получения ключа шифрования');
                     callback(true);
                 }
                 else {
-                    Write.file.info('Идентификатор приложения получен');
                     fs.readFile(Consts.pathLocalRepoArchive, (error, data) => {
                         if (error) {
                             Write.file.error('Ошибка чтения локальной копии архива: ' + error.message);
                             callback(true);
                         }
                         else {
-                            let key = {
-                                key: Crypt.changeEncode(Crypt.sha256(appID.id).substr(0, 32), 'binary'),
-                                iv: Crypt.changeEncode(Crypt.sha256(appID.id.split('').reverse().join('')).substr(0, 16), 'binary')
-                            };
                             data = Crypt.aes.decrypt(data.toString('binary'), key);
                             if (data == null) {
                                 Write.file.error('Ошибка расшифровки архива');
@@ -293,6 +283,36 @@ function Repo (Consts) {
                             }
                         }
                     });
+                }
+            });
+        }
+    }
+
+    /**
+     * Получить ключ шифрования, или сгенерировать, если его нет
+     * @param {CYandexToken} Token Класс для работы с токенами
+     * @param {(error: boolean, key: {key: string, iv: string})} callback Функция обратного вызова
+     */
+    var GetCryptKey = (Token, callback) => {
+        if ((callback !== null) && (typeof callback === 'function')) {
+            Token.getAppID((error, appID) => {
+                if (!appID.crypt) {
+                    let key = Crypt.aes.generateKey();
+                    appID.crypt = Crypt.changeEncode(key.key, 'base64', 'binary') + ':' + Crypt.changeEncode(key.iv, 'base64', 'binary');
+                    fs.writeFile(Consts.pathAppID, JSON.stringify(appID), error => {
+                        if (error)
+                            callback(true);
+                        else
+                            GetCryptKey(Token, callback);
+                    });
+                }
+                else {
+                    let temp = appID.crypt.split(':');
+                    let key = {
+                        key: Crypt.changeEncode(temp[0], 'binary', 'base64'),
+                        iv: Crypt.changeEncode(temp[1], 'binary', 'base64')
+                    };
+                    callback(false, key);
                 }
             });
         }

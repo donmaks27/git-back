@@ -5,6 +5,25 @@ const crypto = require('crypto');
 
 
 /**
+ * Генерация ключа для AES шифрования
+ * @returns {{key: string, iv: string}} Ключ AES
+ */
+var AES_GenerateKey = () => {
+    let result;
+    try {
+        let key = Random(48);
+        result = {
+            key: ChangeEncode(key.substr(0, 32), 'binary'),
+            iv: ChangeEncode(key.substr(32, 48), 'binary')
+        };
+    }
+    catch (error) {
+        result = null;
+    }
+    return result;
+}
+
+/**
  * Шифрование AES
  * @param {string} str Исходная строка
  * @param {{key: string, iv: string}} key Ключ шифрования
@@ -80,6 +99,16 @@ var SHA256 = str => {
 
 
 /**
+ * Генерация рандомной строки
+ * @param {number} bytes Количество байт
+ * @returns {string} Рандомная строка (binary)
+ */
+var Random = bytes => {
+    let data = crypto.randomBytes(bytes);
+    data = data.toString('binary');
+    return data;
+}
+/**
  * Сменить кодировку строки
  * @param {string} source Исходная строка
  * @param {"binary" | "utf8" | "base64" | "hex"} encodeTarget Кодировка исходной строки
@@ -104,7 +133,8 @@ var ChangeEncode = (source, encodeTarget, encodeSource) => {
 
 module.exports.aes = {
     encrypt: AES_Encrypt,
-    decrypt: AES_Decrypt
+    decrypt: AES_Decrypt,
+    generateKey: AES_GenerateKey
 }
 module.exports.sha256 = SHA256;
 module.exports.changeEncode = ChangeEncode;
