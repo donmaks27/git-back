@@ -46,6 +46,20 @@ function Repo (Consts) {
     /* GIT комманды */
 
     /**
+     * Инициализация пустого git-репозитория
+     */
+    var InitEmptyRepo = () => {
+        child_process.spawnSync('git', ['init'], {
+            cwd: Consts.pathCurrent,
+            stdio: 'inherit'
+        });
+        child_process.spawnSync('git', ['remote', 'add', 'origin', Consts.pathLocalRepo], {
+            cwd: Consts.pathCurrent,
+            stdio: 'inherit'
+        });
+    }
+
+    /**
      * Клонирование текущего репозитория в локальную копию
      */
     var CloneCurrentToLocal = () => {
@@ -84,12 +98,54 @@ function Repo (Consts) {
      */
     var PushCurrentToLocal = () => {
         // Если локальная копия репозитория есть
-        if (CheckLocalRepo())
-            // Отправка изменений
-            child_process.spawnSync('git', ['push'], {
-                cwd: Consts.pathCurrent,
-                stdio: 'inherit' // Вывод в консоль
-            });
+        if (CheckLocalRepo()) {
+            var branchInfo = IsBranchHaveUpstream();
+            if (branchInfo.hasUpstream) {
+                // Отправка изменений
+                child_process.spawnSync('git', ['push'], {
+                    cwd: Consts.pathCurrent,
+                    stdio: 'inherit' // Вывод в консоль
+                });
+            }
+            else {
+                child_process.spawnSync('git', ['push', '--set-upstream', 'origin', branchInfo.branch], {
+                    cwd: Consts.pathCurrent,
+                    stdio: 'inherit' // Вывод в консоль
+                });
+            }
+        }
+    }
+
+    var IsBranchHaveUpstream = () => {
+        var output = child_process.spawnSync('git', ['branch', '-vv'], {
+            cwd: Consts.pathCurrent,
+            stdio: 'pipe' // Вывод в консоль
+        });
+
+        var branches = String(output.output);
+        branches = branches.substr(1, branches.length - 3).split('\n');
+
+        var branchName = '';
+        var hasUpstream = false;
+        for (var i = 0; i < branches.length; i++) {
+            var branch = branches[i];
+            var index = branch.search(/(?<=^\s*\*\s*)\S/i);
+            if (index != -1) {
+                branch = branch.substr(index);
+                index = branch.search(/\s/i);
+                branchName = branch.substr(0, index);
+
+                index = branch.search(/\[.+\]/i);
+                if (index != -1) {
+                    hasUpstream = true;
+                }
+                break;
+            }
+        }
+        return {
+            branch: branchName,
+            hasUpstream: hasUpstream
+        }
     }
 
     /**
@@ -321,6 +377,8 @@ function Repo (Consts) {
     this.checkCurrentRepo = CheckCurrentRepo;
     this.checkLocalRepo = CheckLocalRepo;
     this.checkLocalRepoArchive = CheckLocalRepoArchive;
+
+    this.initEmptyRepo = InitEmptyRepo;
 
     this.changeCurrentRepoServer = ChangeCurrentRepoServer;
     this.cloneCurrentToLocal = CloneCurrentToLocal;

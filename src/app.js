@@ -7,6 +7,15 @@ const YandexToken = new (require('./yandexToken'))(Consts);
 const Yandex = new (require('./yandex'))(Consts, Repo, YandexToken);
 
 switch (Consts.command) {
+    // Инициализация репозитория
+    case 'init':
+        Consts.setNames( path.basename(path.dirname(Consts.pathCurrent)), path.basename(Consts.pathCurrent) );
+        // Инициализация пустого git-репозитория
+        if (!Repo.checkCurrentRepo()) {
+            Repo.initEmptyRepo();
+        }
+        break;
+
     // Отправка репозитория на сервер
     case 'push':
         Consts.setNames( path.basename(path.dirname(Consts.pathCurrent)), path.basename(Consts.pathCurrent) );
