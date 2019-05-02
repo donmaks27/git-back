@@ -29,7 +29,7 @@ switch (Consts.command) {
             // Упаковка локальной копии репозитория в архив
             Repo.packLocalRepo(() => {
                 // Отправка архива на сервер
-                Yandex.sendLocalRepoArchive( (Consts.arg1 == 'crypt') || (Consts.arg2 == 'crypt'), error => {
+                Yandex.sendLocalRepoArchive( (Consts.arg1 != 'nocrypt') && (Consts.arg2 != 'nocrypt'), error => {
                     if (error) Write.console.error('Ошибка отправки данных');
                     else       Write.console.correct('Данные успешно отправлены');
                     // Удаление архива
@@ -49,7 +49,7 @@ switch (Consts.command) {
             // Удаление архива, если есть
             Repo.deleteLocalRepoArchive();
             // Получение с архива сервера
-            Yandex.receiveServerRepoArchive( (Consts.arg1 == 'crypt') || (Consts.arg2 == 'crypt'), error => {
+            Yandex.receiveServerRepoArchive( (Consts.arg1 != 'nocrypt') || (Consts.arg2 != 'nocrypt'), error => {
                 if (!error) {
                     Write.console.correct('Данные успешно загружены');
                     // Если не было локальной копии репозитория, то установить источник на скаченный
@@ -97,7 +97,7 @@ switch (Consts.command) {
         // Удаление архива, если есть
         Repo.deleteLocalRepoArchive();
         // Получение с архива сервера
-        Yandex.receiveServerRepoArchive( (Consts.arg3 == 'crypt'), error => {
+        Yandex.receiveServerRepoArchive( (Consts.arg3 != 'nocrypt'), error => {
             if (error) 
                 Write.console.error('Ошибка загрузки данных');
             else
@@ -135,15 +135,16 @@ switch (Consts.command) {
 
     // Вывод справки
     case 'help':
-        console.log( Write.bold(Write.green('  push [repo] [crypt]')) + Write.reset(Write.white(' - Отправка данных на сервер.\n' + 
-                                            '             ' +                                   '   Если указан параметр \'repo\', то без взятия сделанных изменений из текущего репозитория.\n' +
-                                            '             ' +                                   '   Если указан параметр \'crypt\', то на сервер отправятся зашифрованные данные.')) );
-        console.log( Write.bold(Write.green('  pull [repo] [crypt]')) + Write.reset(Write.white(' - Получение данных с сервера.\n' + 
-                                            '             ' +                                   '   Если указан параметр \'repo\', то без внесения изменений в текущий репозиторий.\n' +
-                                            '             ' +                                   '   Если указан параметр \'crypt\', то после получения данные расшифруются.')) );
+        console.log( Write.bold(Write.green('  init')) + Write.reset(Write.white(' - Инициализировать пустой git-репозиторий.')) );
+        console.log( Write.bold(Write.green('  push [repo] [nocrypt]')) + Write.reset(Write.white(' - Отправка данных на сервер.\n' + 
+                                            '                       ' +                           '   Если указан параметр \'repo\', то без взятия сделанных изменений из текущего репозитория.\n' +
+                                            '                       ' +                           '   Если указан параметр \'nocrypt\', то на сервер отправятся незашифрованные данные.')) );
+        console.log( Write.bold(Write.green('  pull [repo] [nocrypt]')) + Write.reset(Write.white(' - Получение данных с сервера.\n' + 
+                                            '                       ' +                           '   Если указан параметр \'repo\', то без внесения изменений в текущий репозиторий.\n' +
+                                            '                       ' +                           '   Если указан параметр \'nocrypt\', то после получения данные не расшифруются.')) );
         console.log( Write.bold(Write.green('  list')) + Write.reset(Write.white(' - Вывести список репозиториев на сервере.')) );
-        console.log( Write.bold(Write.green('  clone')) + Write.yellow(' <project> <repo>') + Write.green(' [crypt]') + Write.reset(Write.white(' - Загрузить и клонировать репозиторий \'repo\' из проекта \'project\' с сервера.\n' +
-                                            '       ' +                '                 ' +              '        ' +                          '   Если указан параметр \'crypt\', то после получения данные расшифруются.')) );
+        console.log( Write.bold(Write.green('  clone')) + Write.yellow(' <project> <repo>') + Write.green(' [nocrypt]') + Write.reset(Write.white(' - Загрузить и клонировать репозиторий \'repo\' из проекта \'project\' с сервера.\n' +
+                                            '       ' +                '                 ' +              '          ' +                          '   Если указан параметр \'nocrypt\', то после получения данные не расшифруются.')) );
         console.log( Write.bold(Write.green('  clear')) + Write.reset(Write.white(' - Удалить локальную копию репозитория.')) );
         console.log( Write.bold(Write.green('  clear-all')) + Write.reset(Write.white(' - Удалить локальные копии всех репозиториев.')) );
         console.log( Write.bold(Write.green('  url')) + Write.yellow(' <url>') + Write.reset(Write.white(' - Обработка URL схемы \'git-back://\'.')) );
