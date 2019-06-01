@@ -1,6 +1,6 @@
 {
     "name": "git-back",
-    "version": "4.0.1",
+    "version": "4.1.0",
     "description": "Программа для использования Яндекс.Диск как хранилище репозиториев.",
     "repository": {
         "type": "git",
@@ -13,6 +13,7 @@
     },
     "homepage": "https://github.com/donmaks27/git-back#readme",
     "dependencies": {
+        "colors": "^1.3.3",
         "opn": "^5.3.0",
         "request": "^2.85.0",
         "tar": "^4.4.1"

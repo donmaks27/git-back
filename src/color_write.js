@@ -1,5 +1,7 @@
 // Модуль для вывода сообщений
 
+var colors = require('colors');
+
 module.exports.red = Red;
 module.exports.yellow = Yellow;
 module.exports.green = Green;
@@ -76,7 +78,7 @@ var path = require('path');
  * @param {number} [code] Код
  */
 function ConsoleWriteError (msg, code) {
-    ConsoleWrite( GetErrorPrefix(), msg, code );
+    ConsoleWrite( colors.red.bold(GetErrorPrefix()), msg, code );
 }
 /**
  * Вывод сообщения об ошибке
@@ -93,7 +95,7 @@ function WriteError (msg, code) {
  * @param {number} [code] Код
  */
 function ConsoleWriteWarning (msg, code) {
-    ConsoleWrite( GetWarningPrefix(), msg, code );
+    ConsoleWrite( colors.yellow.bold(GetWarningPrefix()), msg, code );
 }
 /**
  * Вывод предупреждения
@@ -110,7 +112,7 @@ function WriteWarning (msg, code) {
  * @param {number} [code] Код
  */
 function ConsoleWriteCorrect (msg, code) {
-    ConsoleWrite( GetCorrectPrefix(), msg, code );
+    ConsoleWrite( colors.green.bold(GetCorrectPrefix()), msg, code );
 }
 /**
  * Вывод утвердительного сообщения
@@ -127,7 +129,7 @@ function WriteCorrect (msg, code) {
  * @param {number} [code] Код
  */
 function ConsoleWriteInfo (msg, code) {
-    ConsoleWrite( GetInfoPrefix(), msg, code );
+    ConsoleWrite( colors.white.bold(GetInfoPrefix()), msg, code );
 }
 /**
  * Вывод информации
