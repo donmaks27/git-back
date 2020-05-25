@@ -78,7 +78,7 @@ var AES_Crypt = (isEncrypt, str, key) => {
 
 
 /**
- * Хэш
+ * Хэш SHA256
  * @param {string} str Исходная строка
  * @returns {string} Хэш строки
  */
@@ -87,8 +87,29 @@ var SHA256 = str => {
     try {
         let crypter = crypto.createHash('sha256');
         crypter.update(Buffer.from(str, 'binary'));
-        result = crypter.digest();
-        result = result.toString('binary');
+        result = crypter.digest().toString('binary');
+    }
+    catch (error) {
+        result = null;
+    }
+    return result;
+}
+
+
+
+/**
+ * Хэш HMAC-SHA256
+ * @param {string} str Исходная строка
+ * @param {string} key Ключ для хэша
+ * @returns {string} Хэш строки
+ */
+var HMACSHA256 = (str, key) => {
+    let result;
+    try {
+        let hmacKey = Buffer.from(key, 'binary');
+        let crypter = crypto.createHmac('sha256', hmacKey);
+        crypter.update(Buffer.from(str, 'binary'));
+        result = crypter.digest().toString('binary');
     }
     catch (error) {
         result = null;
@@ -111,8 +132,8 @@ var Random = bytes => {
 /**
  * Сменить кодировку строки
  * @param {string} source Исходная строка
- * @param {"binary" | "utf8" | "base64" | "hex"} encodeTarget Кодировка исходной строки
- * @param {"binary" | "utf8" | "base64" | "hex"} [encodeSource] Кодировка результирующей строки
+ * @param {"binary" | "utf8" | "base64" | "hex"} encodeTarget Кодировка результирующей строки
+ * @param {"binary" | "utf8" | "base64" | "hex"} [encodeSource] Кодировка исходной строки
  * @returns {string} Результирующая строка
  */
 var ChangeEncode = (source, encodeTarget, encodeSource) => {
@@ -137,4 +158,5 @@ module.exports.aes = {
     generateKey: AES_GenerateKey
 }
 module.exports.sha256 = SHA256;
+module.exports.hmacsha256 = HMACSHA256;
 module.exports.changeEncode = ChangeEncode;
