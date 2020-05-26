@@ -22,7 +22,7 @@ var consts = require('./consts');
  * Конструктор
  * @param {consts} Consts Константы
  */
-function YandexToken (Consts) {
+function YandexDiskToken (Consts) {
 
     /* ПРОВЕРКИ */
 
@@ -303,4 +303,4 @@ function YandexToken (Consts) {
     this.getCodeFromUrl = GetCodeFromUrl;
     this.getAppID = GetAppID;
 }
-module.exports = YandexToken;
+module.exports = YandexDiskToken;

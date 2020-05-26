@@ -9,7 +9,7 @@ const Write = require('./color_write');
 const Crypt = require('./crypt');
 
 var consts = require('./consts');
-var CYandexToken = require('./yandexToken');
+var YandexDiskToken = require('./yandexDiskToken');
 
 /**
  * Конструктор
@@ -269,12 +269,12 @@ function Repo (Consts) {
 
     /**
      * Зашифровать архив перед отправкой
-     * @param {CYandexToken} YandexToken Класс для работы с токенами
+     * @param {YandexDiskToken} Token Класс для работы с токенами
      * @param {(error: boolean) => void} callback Функция обратного вызова
      */
-    var EncryptLocalRepoArchive = (YandexToken, callback) => {
-        if (YandexToken && callback && (typeof callback === 'function')) {
-            GetCryptKey(YandexToken, (error, key) => {
+    var EncryptLocalRepoArchive = (Token, callback) => {
+        if (Token && callback && (typeof callback === 'function')) {
+            GetCryptKey(Token, (error, key) => {
                 if (error) {
                     Write.file.error('Ошибка получения ключа шифрования');
                     callback(true);
@@ -304,12 +304,12 @@ function Repo (Consts) {
 
     /**
      * Расшифровать архив после получения
-     * @param {CYandexToken} YandexToken Класс для работы с токенами
+     * @param {YandexDiskToken} Token Класс для работы с токенами
      * @param {(error: boolean) => void} callback Функция обратного вызова
      */
-    var DecryptLocalRepoArchive = (YandexToken, callback) => {
-        if (YandexToken && callback && (typeof callback === 'function')) {
-            GetCryptKey(YandexToken, (error, key) => {
+    var DecryptLocalRepoArchive = (Token, callback) => {
+        if (Token && callback && (typeof callback === 'function')) {
+            GetCryptKey(Token, (error, key) => {
                 if (error) {
                     Write.file.error('Ошибка получения ключа шифрования');
                     callback(true);
@@ -346,7 +346,7 @@ function Repo (Consts) {
 
     /**
      * Получить ключ шифрования, или сгенерировать, если его нет
-     * @param {CYandexToken} Token Класс для работы с токенами
+     * @param {YandexDiskToken} Token Класс для работы с токенами
      * @param {(error: boolean, key: {key: string, iv: string})} callback Функция обратного вызова
      */
     var GetCryptKey = (Token, callback) => {

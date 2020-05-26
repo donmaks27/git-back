@@ -8,15 +8,15 @@ var url = require('url');
 const Write = require('./color_write');
 var Consts = require('./consts');
 var RepoWorker = require('./repo');
-var YandexToken = require('./yandexToken');
+var YandexDiskToken = require('./yandexDiskToken');
 
 /**
  * Конструктор
  * @param {Consts} Consts Константы
  * @param {RepoWorker} Repo Модуль для работы с репозиториями
- * @param {YandexToken} Token Модуль для работы с токенами
+ * @param {YandexDiskToken} Token Модуль для работы с токенами
  */
-function Yandex (Consts, Repo, Token) {
+function YandexDisk (Consts, Repo, Token) {
 
     /* РАБОТА С РЕПОЗИТОРИЯМИ */
 
@@ -573,4 +573,4 @@ function Yandex (Consts, Repo, Token) {
     this.receiveServerRepoArchive = ReceiveServerRepoArchive;
     this.getFullReposList = GetFullReposList;
 }
-module.exports = Yandex;
+module.exports = YandexDisk;

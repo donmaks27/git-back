@@ -1,10 +1,11 @@
 var path = require('path');
 
+const crypt = require('./crypt');
 const Write = require('./color_write'); 
 const Consts = new (require('./consts'))();
 const Repo = new (require('./repo'))(Consts);
-const YandexToken = new (require('./yandexToken'))(Consts);
-const Yandex = new (require('./yandex'))(Consts, Repo, YandexToken);
+const YandexDiskToken = new (require('./yandexDiskToken'))(Consts);
+const YandexDisk = new (require('./yandexDisk'))(Consts, Repo, YandexDiskToken);
 
 switch (Consts.command) {
     // Инициализация репозитория
@@ -29,7 +30,7 @@ switch (Consts.command) {
             // Упаковка локальной копии репозитория в архив
             Repo.packLocalRepo(() => {
                 // Отправка архива на сервер
-                Yandex.sendLocalRepoArchive( (Consts.arg1 != 'nocrypt') && (Consts.arg2 != 'nocrypt'), error => {
+                YandexDisk.sendLocalRepoArchive( (Consts.arg1 != 'nocrypt') && (Consts.arg2 != 'nocrypt'), error => {
                     if (error) Write.console.error('Ошибка отправки данных');
                     else       Write.console.correct('Данные успешно отправлены');
                     // Удаление архива
@@ -49,7 +50,7 @@ switch (Consts.command) {
             // Удаление архива, если есть
             Repo.deleteLocalRepoArchive();
             // Получение с архива сервера
-            Yandex.receiveServerRepoArchive( (Consts.arg1 != 'nocrypt') || (Consts.arg2 != 'nocrypt'), error => {
+            YandexDisk.receiveServerRepoArchive( (Consts.arg1 != 'nocrypt') || (Consts.arg2 != 'nocrypt'), error => {
                 if (!error) {
                     Write.console.correct('Данные успешно загружены');
                     // Если не было локальной копии репозитория, то установить источник на скаченный
@@ -76,7 +77,7 @@ switch (Consts.command) {
     // Список репозиториев на сервере
     case 'list':
         // Получение списка проектов с их репозиториями
-        Yandex.getFullReposList((error, list) => {
+        YandexDisk.getFullReposList((error, list) => {
             if (!error) {
                 // Проекты
                 for (let project in list) {
@@ -97,7 +98,7 @@ switch (Consts.command) {
         // Удаление архива, если есть
         Repo.deleteLocalRepoArchive();
         // Получение с архива сервера
-        Yandex.receiveServerRepoArchive( (Consts.arg3 != 'nocrypt'), error => {
+        YandexDisk.receiveServerRepoArchive( (Consts.arg3 != 'nocrypt'), error => {
             if (error) 
                 Write.console.error('Ошибка загрузки данных');
             else
@@ -130,7 +131,7 @@ switch (Consts.command) {
 
     // Обработка схемы
     case 'url':
-        YandexToken.getCodeFromUrl(Consts.arg1);
+        YandexDiskToken.getCodeFromUrl(Consts.arg1);
         break;
 
     // Вывод справки
