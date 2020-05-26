@@ -74,7 +74,7 @@ function YandexDisk (Consts, Repo, Token) {
                     }
                 };
                 if (encrypt)
-                    Repo.encryptLocalRepoArchive(Token, encryptCallback);
+                    Repo.encryptLocalRepoArchive(encryptCallback);
                 else
                     encryptCallback(false);
             }
@@ -108,7 +108,7 @@ function YandexDisk (Consts, Repo, Token) {
                                 Write.file.correct('Файл получен', response.statusCode);
                                 if (decrypt)
                                     // Расшифровка архива
-                                    Repo.decryptLocalRepoArchive(Token, error => {
+                                    Repo.decryptLocalRepoArchive(error => {
                                         if (error) {
                                             Write.file.error('Ошибка расшифровки архива');
                                             callback(true);
@@ -137,7 +137,7 @@ function YandexDisk (Consts, Repo, Token) {
                                         Write.file.correct('Файл получен', response.statusCode);
                                         if (decrypt)
                                             // Расшифровка архива
-                                            Repo.decryptLocalRepoArchive(Token, error => {
+                                            Repo.decryptLocalRepoArchive(error => {
                                                 if (error) {
                                                     Write.file.error('Ошибка расшифровки архива');
                                                     callback(true);

@@ -9,7 +9,6 @@ const Write = require('./color_write');
 const Crypt = require('./crypt');
 
 var consts = require('./consts');
-var YandexDiskToken = require('./yandexDiskToken');
 
 /**
  * Конструктор
@@ -269,12 +268,11 @@ function Repo (Consts) {
 
     /**
      * Зашифровать архив перед отправкой
-     * @param {YandexDiskToken} Token Класс для работы с токенами
      * @param {(error: boolean) => void} callback Функция обратного вызова
      */
-    var EncryptLocalRepoArchive = (Token, callback) => {
-        if (Token && callback && (typeof callback === 'function')) {
-            GetCryptKey(Token, (error, key) => {
+    var EncryptLocalRepoArchive = (callback) => {
+        if (callback && (typeof callback === 'function')) {
+            GetCryptKey((error, key) => {
                 if (error) {
                     Write.file.error('Ошибка получения ключа шифрования');
                     callback(true);
@@ -304,12 +302,11 @@ function Repo (Consts) {
 
     /**
      * Расшифровать архив после получения
-     * @param {YandexDiskToken} Token Класс для работы с токенами
      * @param {(error: boolean) => void} callback Функция обратного вызова
      */
-    var DecryptLocalRepoArchive = (Token, callback) => {
-        if (Token && callback && (typeof callback === 'function')) {
-            GetCryptKey(Token, (error, key) => {
+    var DecryptLocalRepoArchive = (callback) => {
+        if (callback && (typeof callback === 'function')) {
+            GetCryptKey((error, key) => {
                 if (error) {
                     Write.file.error('Ошибка получения ключа шифрования');
                     callback(true);
@@ -346,24 +343,23 @@ function Repo (Consts) {
 
     /**
      * Получить ключ шифрования, или сгенерировать, если его нет
-     * @param {YandexDiskToken} Token Класс для работы с токенами
      * @param {(error: boolean, key: {key: string, iv: string})} callback Функция обратного вызова
      */
-    var GetCryptKey = (Token, callback) => {
+    var GetCryptKey = (callback) => {
         if ((callback !== null) && (typeof callback === 'function')) {
-            Token.getAppID((error, appID) => {
-                if (!appID.crypt) {
+            GetRepoCrypt((error, repoCrypt) => {
+                if (!repoCrypt.crypt) {
                     let key = Crypt.aes.generateKey();
-                    appID.crypt = Crypt.changeEncode(key.key, 'base64', 'binary') + ':' + Crypt.changeEncode(key.iv, 'base64', 'binary');
-                    fs.writeFile(Consts.pathAppID, JSON.stringify(appID), error => {
+                    repoCrypt.crypt = Crypt.changeEncode(key.key, 'base64', 'binary') + ':' + Crypt.changeEncode(key.iv, 'base64', 'binary');
+                    fs.writeFile(Consts.pathRepoCrypt, JSON.stringify(repoCrypt), error => {
                         if (error)
                             callback(true);
                         else
-                            GetCryptKey(Token, callback);
+                            GetCryptKey(callback);
                     });
                 }
                 else {
-                    let temp = appID.crypt.split(':');
+                    let temp = repoCrypt.crypt.split(':');
                     let key = {
                         key: Crypt.changeEncode(temp[0], 'binary', 'base64'),
                         iv: Crypt.changeEncode(temp[1], 'binary', 'base64')
@@ -372,6 +368,40 @@ function Repo (Consts) {
                 }
             });
         }
+    }
+    /**
+     * Получить идентификатор приложения
+     * @param {(error: boolean, key: string) => void} callback Функция обратного вызова
+     */
+    var GetRepoCrypt = callback => {
+        if ((typeof callback === 'function') && CheckRepoCrypt()) {
+            fs.readFile(Consts.pathRepoCrypt, (error, data) => {
+                if (!error) {
+                    data = JSON.parse(data);
+                    if (data.crypt)
+                        callback(false, data.crypt);
+                    else {
+                        Write.file.error('Неверный формат repoCrypt');
+                        callback(true);
+                    }
+                }
+                else {
+                    Write.file.error(error.message, error.code);
+                    callback(true);
+                }
+            });
+        }
+        else {
+            Write.file.error('Отсутствует repoCrypt');
+            callback(true);
+        }
+    }
+    /**
+     * Проверка идентификатора приложения
+     * @returns {boolean} Идентификатор существует
+     */
+    var CheckRepoCrypt = () => {
+        return fs.existsSync(Consts.pathRepoCrypt);
     }
 
     this.checkCurrentRepo = CheckCurrentRepo;

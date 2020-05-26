@@ -1,6 +1,5 @@
 var path = require('path');
 
-const crypt = require('./crypt');
 const Write = require('./color_write'); 
 const Consts = new (require('./consts'))();
 const Repo = new (require('./repo'))(Consts);

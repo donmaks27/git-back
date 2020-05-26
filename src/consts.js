@@ -28,15 +28,20 @@ function Consts () {
      */
     this.pathCredentials = path.join(this.pathApp, 'credentials');
     /**
+     * Путь к файлу с ключом шифрования репозиториев
+     * @type {string}
+     */
+    this.pathRepoCrypt = path.join(this.pathCredentials, 'repoCrypt.json');
+    /**
      * Путь к файлу с appID
      * @type {string}
      */
-    this.pathAppID = path.join(this.pathCredentials, 'appID.json');
+    this.pathYandexDiskAppID = path.join(this.pathCredentials, 'yandexDiskAppID.json');
     /**
      * Путь к файлу с токеном
      * @type {string}
      */
-    this.pathToken = path.join(this.pathCredentials, 'token.json');
+    this.pathYandexDiskToken = path.join(this.pathCredentials, 'yandexDiskToken.json');
     /**
      * Путь к текущей директории, из которой вызывается git-back
      * @type {string}

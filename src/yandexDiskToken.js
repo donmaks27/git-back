@@ -31,7 +31,7 @@ function YandexDiskToken (Consts) {
      * @returns {boolean} Токен существует
      */
     var CheckToken = () => {
-        return fs.existsSync(Consts.pathToken);
+        return fs.existsSync(Consts.pathYandexDiskToken);
     }
 
     /**
@@ -39,7 +39,7 @@ function YandexDiskToken (Consts) {
      * @returns {boolean} Идентификатор существует
      */
     var CheckAppID = () => {
-        return fs.existsSync(Consts.pathAppID);
+        return fs.existsSync(Consts.pathYandexDiskAppID);
     }
 
     /* ПОЛУЧЕНИЕ ДАННЫХ ИЗ ФАЙЛОВ */
@@ -56,7 +56,7 @@ function YandexDiskToken (Consts) {
                 callback(true);
         }
         else {
-            fs.readFile(Consts.pathToken, (error, data) => {
+            fs.readFile(Consts.pathYandexDiskToken, (error, data) => {
                 if (!error) {
                     data = JSON.parse(data);
                     if (data.token && data.refresh_token && data.expire && data.create_time) {
@@ -91,7 +91,7 @@ function YandexDiskToken (Consts) {
      */
     var GetAppID = callback => {
         if ((typeof callback === 'function') && CheckAppID()) {
-            fs.readFile(Consts.pathAppID, (error, data) => {
+            fs.readFile(Consts.pathYandexDiskAppID, (error, data) => {
                 if (!error) {
                     data = JSON.parse(data);
                     if (data.id && data.secret)
@@ -199,7 +199,7 @@ function YandexDiskToken (Consts) {
                                 expire: json.expires_in,
                                 create_time: Math.round(new Date().getTime() / 1000)
                             }
-                            fs.writeFile(Consts.pathToken, JSON.stringify(obj), error => {
+                            fs.writeFile(Consts.pathYandexDiskToken, JSON.stringify(obj), error => {
                                 if (!error)
                                     Write.file.correct('Токен получен');
                                 else
@@ -262,7 +262,7 @@ function YandexDiskToken (Consts) {
                                 expire: json.expires_in,
                                 create_time: Math.round(new Date().getTime() / 1000)
                             }
-                            fs.writeFile(Consts.pathToken, JSON.stringify(obj), error => {
+                            fs.writeFile(Consts.pathYandexDiskToken, JSON.stringify(obj), error => {
                                 if (!error) {
                                     Write.file.correct('Токен получен');
                                     if (typeof callback === 'function')
