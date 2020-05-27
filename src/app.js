@@ -28,13 +28,38 @@ switch (Consts.command) {
                 Repo.pushCurrentToLocal();
             // Упаковка локальной копии репозитория в архив
             Repo.packLocalRepo(() => {
-                // Отправка архива на сервер
-                YandexDisk.sendLocalRepoArchive( (Consts.arg1 != 'nocrypt') && (Consts.arg2 != 'nocrypt'), error => {
-                    if (error) Write.console.error('Ошибка отправки данных');
-                    else       Write.console.correct('Данные успешно отправлены');
-                    // Удаление архива
-                    Repo.deleteLocalRepoArchive();
-                });
+                Write.console.correct('Архив запакован');
+
+                var callback = () => {
+                    // Отправка архива на сервер
+                    YandexDisk.sendLocalRepoArchive((error) => {
+                        if (error) {
+                            Write.console.error('Ошибка отправки данных');
+                        }
+                        else {
+                            Write.console.correct('Данные успешно отправлены');
+                        }
+                        // Удаление архива
+                        Repo.deleteLocalRepoArchive();
+                    });
+                };
+
+                if ((Consts.arg1 != 'nocrypt') && (Consts.arg2 != 'nocrypt')) {
+                    // Шифрование архива
+                    Repo.encryptLocalRepoArchive((error) => {
+                        if (error) {
+                            Write.console.error('Ошибка шифрования архива');
+                            Repo.deleteLocalRepoArchive();
+                            return;
+                        }
+
+                        Write.console.correct('Архив зашифрован');
+                        callback();
+                    });
+                }
+                else {
+                    callback();
+                }
             });
         }
         else 

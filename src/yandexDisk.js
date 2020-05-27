@@ -22,67 +22,55 @@ function YandexDisk (Consts, Repo, Token) {
 
     /**
      * Отправить запакованную локальную копию репозитория на сервер
-     * @param {boolean} encrypt Зашифровать ли архив перед отправкой
      * @param {(error: boolean) => void} callback Функция обратного вызова
      */
-    var SendLocalRepoArchive = (encrypt, callback) => {
-        if (typeof callback === 'function') {
-            if (Repo.checkLocalRepoArchive()) {
-                var encryptCallback = error => {
-                    if (!error) {
-                        if (encrypt) Write.file.info('Архив зашифрован');
-                        // Получить URL для отправки
-                        GetSendURL((error, href) => {
-                            if (!error) {
-                                let urlObject = url.parse(href);
-                                let request = https.request({
-                                    method: 'PUT',
-                                    hostname: urlObject.hostname,
-                                    port: urlObject.port,
-                                    path: urlObject.path
-                                }, response => {
-                                    // Файл отправлен
-                                    if ((response.statusCode == 201) || (response.statusCode == 202)) {
-                                        Write.file.correct('Файл  отправлен', response.statusCode);
-                                        callback(false);
-                                    }
-                                    else {
-                                        Write.file.error('Ошибка отправки файла', response.statusCode);
-                                        callback(true);
-                                    }
-                                });
-
-                                request.on('error', function (error) {
-                                    Write.file.error(error.message);
-                                    callback(true);
-                                });
-            
-                                // Добавление архива в запрос
-                                fs.createReadStream(Consts.pathLocalRepoArchive).pipe(request).on('finish', () => {
-                                    request.end();
-                                });
-                            }
-                            else {
-                                Write.file.error('Ошибка получения ссылки для отправки файла');
-                                callback(true);
-                            }
-                        });
-                    }
-                    else {
-                        if (encrypt) Write.file.error('Ошибка шифрования архива');
-                        callback(true);
-                    }
-                };
-                if (encrypt)
-                    Repo.encryptLocalRepoArchive(encryptCallback);
-                else
-                    encryptCallback(false);
-            }
-            else {
-                Write.file.error('Не найден архив с локальной копией репозитория');
-                callback(true);
-            }
+    var SendLocalRepoArchive = (callback) => {
+        if (typeof callback !== 'function') {
+            return;
         }
+
+        if (!Repo.checkLocalRepoArchive()) {
+            Write.file.error('Не найден архив с локальной копией репозитория');
+            callback(true);
+            return;
+        }
+
+        // Получить URL для отправки
+        GetSendURL((error, href) => {
+            if (error) {
+                Write.file.error('Ошибка получения ссылки для отправки файла');
+                callback(true);
+                return;
+            }
+
+            let urlObject = url.parse(href);
+            let request = https.request({
+                method: 'PUT',
+                hostname: urlObject.hostname,
+                port: urlObject.port,
+                path: urlObject.path
+            }, response => {
+                // Файл отправлен
+                if ((response.statusCode == 201) || (response.statusCode == 202)) {
+                    Write.file.correct('Файл  отправлен', response.statusCode);
+                    callback(false);
+                }
+                else {
+                    Write.file.error('Ошибка отправки файла', response.statusCode);
+                    callback(true);
+                }
+            });
+
+            request.on('error', function (error) {
+                Write.file.error(error.message);
+                callback(true);
+            });
+
+            // Добавление архива в запрос
+            fs.createReadStream(Consts.pathLocalRepoArchive).pipe(request).on('finish', () => {
+                request.end();
+            });
+        });
     }
 
     /**
@@ -90,73 +78,52 @@ function YandexDisk (Consts, Repo, Token) {
      * @param {(error: boolean) => void} callback Функция обратного вызова
      */
     var ReceiveServerRepoArchive = (callback) => {
-        if (typeof callback === 'function') {
-            // Получить ссылку для скачивания
-            GetReceiveURL((error, href) => {
-                if (!error) {
-                    let urlObject = url.parse(href);
-                    let request = https.request({
-                        method: 'GET',
-                        hostname: urlObject.hostname,
-                        port: urlObject.port,
-                        path: urlObject.path
-                    }, response => {
-                        if (response.statusCode == 200) {
-                            // Извлечение файла
-                            response.pipe(fs.createWriteStream(Consts.pathLocalRepoArchive)).on('finish', () => {
-                                Write.file.correct('Файл получен', response.statusCode);
-                                callback(false);
-                            });
-                        }
-                        else if (response.statusCode == 302) {
-                            Write.file.info('Файл доступен по другому пути');
-                            href = response.headers.location;
-                            urlObject = url.parse(href);
-                            let request1 = https.request({
-                                method: 'GET',
-                                hostname: urlObject.hostname,
-                                port: urlObject.port,
-                                path: urlObject.path
-                            }, response => {
-                                if (response.statusCode == 200) {
-                                    // Извлечение файла
-                                    response.pipe(fs.createWriteStream(Consts.pathLocalRepoArchive)).on('finish', () => {
-                                        Write.file.correct('Файл получен', response.statusCode);
-                                        callback(false);
-                                    });
-                                }
-                                else {
-                                    Write.file.error('Ошибка загрузки файла', response.statusCode);
-                                    callback(true);
-                                }
-                            });
-        
-                            request1.on('error', function (error) {
-                                Write.file.error(error.message);
-                                callback(true);
-                            });
-            
-                            request1.end();
-                        }
-                        else {
-                            Write.file.error('Ошибка загрузки файла', response.statusCode);
-                            callback(true);
-                        }
-                    });
-
-                    request.on('error', function (error) {
-                        Write.file.error(error.message);
-                        callback(true);
-                    });
-    
-                    request.end();
-                }
-                else {
-                    Write.file.error('Ошибка получения ссылки для получения файла');
-                    callback(true);
-                }
-            });
+        if (typeof callback !== 'function') {
+            return;
         }
+
+        // Получить ссылку для скачивания
+        GetReceiveURL((error, href) => {
+            if (error) {
+                Write.file.error('Ошибка получения ссылки для получения файла');
+                callback(true);
+                return;
+            }
+
+            let sendRequest = (checkCode302, href) => {
+                let urlObject = url.parse(href);
+                let request = https.request({
+                    method: 'GET',
+                    hostname: urlObject.hostname,
+                    port: urlObject.port,
+                    path: urlObject.path
+                }, response => {
+                    if (response.statusCode == 200) {
+                        // Извлечение файла
+                        response.pipe(fs.createWriteStream(Consts.pathLocalRepoArchive)).on('finish', () => {
+                            Write.file.correct('Файл получен', response.statusCode);
+                            callback(false);
+                        });
+                    }
+                    else if (checkCode302 && (response.statusCode == 302)) {
+                        Write.file.info('Файл доступен по другому пути');
+                        sendRequest(false, response.headers.location);
+                    }
+                    else {
+                        Write.file.error('Ошибка загрузки файла', response.statusCode);
+                        callback(true);
+                    }
+                });
+
+                request.on('error', function (error) {
+                    Write.file.error(error.message);
+                    callback(true);
+                });
+
+                request.end();
+            };
+            sendRequest(true, href);
+        });
     }
 
     /**
