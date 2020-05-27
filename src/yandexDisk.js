@@ -7,16 +7,14 @@ var url = require('url');
 
 const Write = require('./color_write');
 var Consts = require('./consts');
-var RepoWorker = require('./repo');
 var YandexDiskToken = require('./yandexDiskToken');
 
 /**
  * Конструктор
  * @param {Consts} Consts Константы
- * @param {RepoWorker} Repo Модуль для работы с репозиториями
  * @param {YandexDiskToken} Token Модуль для работы с токенами
  */
-function YandexDisk (Consts, Repo, Token) {
+function YandexDisk (Consts, Token) {
 
     /* РАБОТА С РЕПОЗИТОРИЯМИ */
 
@@ -26,12 +24,6 @@ function YandexDisk (Consts, Repo, Token) {
      */
     var SendLocalRepoArchive = (callback) => {
         if (typeof callback !== 'function') {
-            return;
-        }
-
-        if (!Repo.checkLocalRepoArchive()) {
-            Write.file.error('Не найден архив с локальной копией репозитория');
-            callback(true);
             return;
         }
 

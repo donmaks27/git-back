@@ -6,16 +6,14 @@ var xml = require('xml2js');
 
 const Write = require('./color_write');
 var Consts = require('./consts');
-var RepoWorker = require('./repo');
 var YandexCloudRequestBuilder = require('./yandexCloudRequestBuilder');
 
 /**
  * Конструктор
  * @param {Consts} Consts Константы
- * @param {RepoWorker} Repo Модуль для работы с репозиториями
  * @param {YandexCloudRequestBuilder} RequestBuilder Модуль для отправки запросов
  */
-function YandexCloud (Consts, Repo, RequestBuilder) {
+function YandexCloud (Consts, RequestBuilder) {
 
     /**
      * Отправить запакованную локальную копию репозитория на сервер

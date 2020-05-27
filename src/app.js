@@ -3,8 +3,9 @@ var path = require('path');
 const Write = require('./color_write'); 
 const Consts = new (require('./consts'))();
 const Repo = new (require('./repo'))(Consts);
+
 const YandexDiskToken = new (require('./yandexDiskToken'))(Consts);
-const YandexDisk = new (require('./yandexDisk'))(Consts, Repo, YandexDiskToken);
+const YandexDisk = new (require('./yandexDisk'))(Consts, YandexDiskToken);
 
 switch (Consts.command) {
     // Инициализация репозитория
