@@ -7,7 +7,71 @@ const Repo = new (require('./repo'))(Consts);
 const YandexDiskToken = new (require('./yandexDiskToken'))(Consts);
 const YandexDisk = new (require('./yandexDisk'))(Consts, YandexDiskToken);
 
+const YandexCloudRequestBuilder = new (require('./yandexCloudRequestBuilder'))(Consts);
+const YandexCloud = new (require('./yandexCloud'))(Consts, YandexCloudRequestBuilder);
+
+/**
+ * @type {YandexDisk}
+ */
+let Yandex = null;
+
 switch (Consts.command) {
+    
+    // Использовать Яндекс.Диск
+    case 'disk': 
+        Yandex = YandexDisk;
+        break;
+    // Использовать Яндекс.Облако
+    case 'cloud':
+        Yandex = YandexCloud;
+        break;
+
+    // Удалить локальную копию репозитория
+    case 'clear':
+        Consts.setNames( path.basename(path.dirname(Consts.pathCurrent)), path.basename(Consts.pathCurrent) );
+        // Удаление архива
+        Repo.deleteLocalRepoArchive();
+        // Удаление репозитория
+        Repo.deleteLocalRepo();
+        break;
+
+    // Удалить локальную копию репозитория
+    case 'clear-all':
+        Repo.deleteAllLocalRepos();
+        Write.console.correct('Локальные копии репозиториев удалены');
+        break;
+
+    // Обработка схемы
+    case 'url':
+        YandexDiskToken.getCodeFromUrl(Consts.action);
+        break;
+
+    // Вывод справки
+    case 'help':
+        console.log( Write.bold(Write.yellow('  (disk|cloud)') + Write.green(' init')) + Write.reset(Write.white(' - Инициализировать пустой git-репозиторий.')) );
+        console.log( Write.bold(Write.yellow('  (disk|cloud)') + Write.green(' push [repo] [nocrypt]')) + Write.reset(Write.white(' - Отправка данных на сервер.\n' + 
+                                             '               ' +              '                      ' +                           '   Если указан параметр \'repo\', то без взятия сделанных изменений из текущего репозитория.\n' +
+                                             '               ' +              '                      ' +                           '   Если указан параметр \'nocrypt\', то на сервер отправятся незашифрованные данные.')) );
+        console.log( Write.bold(Write.yellow('  (disk|cloud)') + Write.green(' pull [repo] [nocrypt]')) + Write.reset(Write.white(' - Получение данных с сервера.\n' + 
+                                             '               ' +              '                      ' +                           '   Если указан параметр \'repo\', то без внесения изменений в текущий репозиторий.\n' +
+                                             '               ' +              '                      ' +                           '   Если указан параметр \'nocrypt\', то после получения данные не расшифруются.')) );
+        console.log( Write.bold(Write.yellow('  (disk|cloud)') + Write.green(' list')) + Write.reset(Write.white(' - Вывести список репозиториев на сервере.')) );
+        console.log( Write.bold(Write.yellow('  (disk|cloud)') + Write.green(' clone')) + Write.yellow(' <project> <repo>') + Write.green(' [nocrypt]') + Write.reset(Write.white(' - Загрузить и клонировать репозиторий \'repo\' из проекта \'project\' с сервера.\n' +
+                                             '               ' +              '      ' +                '                 ' +              '          ' +                          '   Если указан параметр \'nocrypt\', то после получения данные не расшифруются.')) );
+        console.log(  Write.bold(Write.green('  clear')) + Write.reset(Write.white(' - Удалить локальную копию репозитория.')) );
+        console.log(  Write.bold(Write.green('  clear-all')) + Write.reset(Write.white(' - Удалить локальные копии всех репозиториев.')) );
+        console.log(  Write.bold(Write.green('  url')) + Write.yellow(' <url>') + Write.reset(Write.white(' - Обработка URL схемы \'git-back://\'.')) );
+        break;
+
+    default:
+        Write.console.error('Не указана команда');
+}
+if (Yandex == null) {
+    return;
+}
+
+switch (Consts.action) {
+
     // Инициализация репозитория
     case 'init':
         Consts.setNames( path.basename(path.dirname(Consts.pathCurrent)), path.basename(Consts.pathCurrent) );
@@ -37,7 +101,7 @@ switch (Consts.command) {
                 Write.console.correct('Архив запакован');
                 var callback = () => {
                     // Отправка архива на сервер
-                    YandexDisk.sendLocalRepoArchive((error) => {
+                    Yandex.sendLocalRepoArchive((error) => {
                         if (error) {
                             Write.console.error('Ошибка отправки данных');
                         }
@@ -79,7 +143,7 @@ switch (Consts.command) {
             // Удаление архива, если есть
             Repo.deleteLocalRepoArchive();
             // Получение архива с сервера
-            YandexDisk.receiveServerRepoArchive(error => {
+            Yandex.receiveServerRepoArchive(error => {
                 if (error) {
                     Write.console.error('Ошибка загрузки данных');
                     return;
@@ -124,7 +188,7 @@ switch (Consts.command) {
     // Список репозиториев на сервере
     case 'list':
         // Получение списка проектов с их репозиториями
-        YandexDisk.getFullReposList((error, list) => {
+        Yandex.getFullReposList((error, list) => {
             if (!error) {
                 // Проекты
                 for (let project in list) {
@@ -145,7 +209,7 @@ switch (Consts.command) {
         // Удаление архива, если есть
         Repo.deleteLocalRepoArchive();
         // Получение архива с сервера
-        YandexDisk.receiveServerRepoArchive(error => {
+        Yandex.receiveServerRepoArchive(error => {
             if (error) {
                 Write.console.error('Ошибка загрузки данных');
                 return;
@@ -182,43 +246,6 @@ switch (Consts.command) {
         });
         break;
 
-    // Удалить локальную копию репозитория
-    case 'clear':
-        Consts.setNames( path.basename(path.dirname(Consts.pathCurrent)), path.basename(Consts.pathCurrent) );
-        // Удаление архива
-        Repo.deleteLocalRepoArchive();
-        // Удаление репозитория
-        Repo.deleteLocalRepo();
-        break;
-
-    // Удалить локальную копию репозитория
-    case 'clear-all':
-        Repo.deleteAllLocalRepos();
-        Write.console.correct('Локальные копии репозиториев удалены');
-        break;
-
-    // Обработка схемы
-    case 'url':
-        YandexDiskToken.getCodeFromUrl(Consts.arg1);
-        break;
-
-    // Вывод справки
-    case 'help':
-        console.log( Write.bold(Write.green('  init')) + Write.reset(Write.white(' - Инициализировать пустой git-репозиторий.')) );
-        console.log( Write.bold(Write.green('  push [repo] [nocrypt]')) + Write.reset(Write.white(' - Отправка данных на сервер.\n' + 
-                                            '                       ' +                           '   Если указан параметр \'repo\', то без взятия сделанных изменений из текущего репозитория.\n' +
-                                            '                       ' +                           '   Если указан параметр \'nocrypt\', то на сервер отправятся незашифрованные данные.')) );
-        console.log( Write.bold(Write.green('  pull [repo] [nocrypt]')) + Write.reset(Write.white(' - Получение данных с сервера.\n' + 
-                                            '                       ' +                           '   Если указан параметр \'repo\', то без внесения изменений в текущий репозиторий.\n' +
-                                            '                       ' +                           '   Если указан параметр \'nocrypt\', то после получения данные не расшифруются.')) );
-        console.log( Write.bold(Write.green('  list')) + Write.reset(Write.white(' - Вывести список репозиториев на сервере.')) );
-        console.log( Write.bold(Write.green('  clone')) + Write.yellow(' <project> <repo>') + Write.green(' [nocrypt]') + Write.reset(Write.white(' - Загрузить и клонировать репозиторий \'repo\' из проекта \'project\' с сервера.\n' +
-                                            '       ' +                '                 ' +              '          ' +                          '   Если указан параметр \'nocrypt\', то после получения данные не расшифруются.')) );
-        console.log( Write.bold(Write.green('  clear')) + Write.reset(Write.white(' - Удалить локальную копию репозитория.')) );
-        console.log( Write.bold(Write.green('  clear-all')) + Write.reset(Write.white(' - Удалить локальные копии всех репозиториев.')) );
-        console.log( Write.bold(Write.green('  url')) + Write.yellow(' <url>') + Write.reset(Write.white(' - Обработка URL схемы \'git-back://\'.')) );
-        break;
-
     default:
-        Write.console.error('Не указана команда');
+        Write.console.error('Не указано действие');
 }

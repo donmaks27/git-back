@@ -58,20 +58,25 @@ function Consts () {
      */
     this.command = process.argv[2];
     /**
+     * Команда
+     * @type {string}
+     */
+    this.action = process.argv[3];
+    /**
      * Первый аргумент команды
      * @type {string}
      */
-    this.arg1 = process.argv[3];
+    this.arg1 = process.argv[4];
     /**
      * Второй аргумент команды
      * @type {string}
      */
-    this.arg2 = process.argv[4];
+    this.arg2 = process.argv[5];
     /**
      * Третий аргумент команды
      * @type {string}
      */
-    this.arg3 = process.argv[5];
+    this.arg3 = process.argv[6];
 
     /* ПОЛЯ */
 
