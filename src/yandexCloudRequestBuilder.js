@@ -89,7 +89,7 @@ function YandexCloudRequestBuilder (Consts) {
     var SendGetRequest = (path, queryParams, callback) => {
         GetYandexCloudAccount((error, yandexCloudAccount) => {
             if (error) {
-                Write.file.error('Ошибка чтения appID');
+                Write.file.error('Ошибка чтения yandexCloudAccount');
                 callback(true);
                 return;
             }
@@ -116,15 +116,15 @@ function YandexCloudRequestBuilder (Consts) {
                 host: host,
                 path: path,
                 headers: headers
-            }, (responce) => {
+            }, (response) => {
                 // Чтение тела ответа
                 let body = '';
-                responce.setEncoding('utf-8');
-                responce.on('data', function (chunk) {
+                response.setEncoding('utf-8');
+                response.on('data', function (chunk) {
                     body += chunk;
                 });
-                responce.on('end', function () {
-                    callback(false, responce, body);
+                response.on('end', function () {
+                    callback(false, response, body);
                 });
             });
     

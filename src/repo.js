@@ -330,8 +330,10 @@ function Repo (Consts) {
                                         Write.file.error('Ошибка записи в локальную копию архива: ' + error.message);
                                         callback(true);
                                     }
-                                    else
+                                    else {
+                                        Write.file.info('Архив расшифрован');
                                         callback(false);
+                                    }
                                 });
                             }
                         }
@@ -371,7 +373,7 @@ function Repo (Consts) {
     }
     /**
      * Получить идентификатор приложения
-     * @param {(error: boolean, key: string) => void} callback Функция обратного вызова
+     * @param {(error: boolean, key: {crypt: string}) => void} callback Функция обратного вызова
      */
     var GetRepoCrypt = callback => {
         if ((typeof callback === 'function') && CheckRepoCrypt()) {
@@ -379,7 +381,7 @@ function Repo (Consts) {
                 if (!error) {
                     data = JSON.parse(data);
                     if (data.crypt)
-                        callback(false, data.crypt);
+                        callback(false, data);
                     else {
                         Write.file.error('Неверный формат repoCrypt');
                         callback(true);

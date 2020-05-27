@@ -49,9 +49,21 @@ switch (Consts.command) {
             // Удаление архива, если есть
             Repo.deleteLocalRepoArchive();
             // Получение с архива сервера
-            YandexDisk.receiveServerRepoArchive( (Consts.arg1 != 'nocrypt') || (Consts.arg2 != 'nocrypt'), error => {
-                if (!error) {
-                    Write.console.correct('Данные успешно загружены');
+            YandexDisk.receiveServerRepoArchive(error => {
+                if (error) {
+                    Write.console.error('Ошибка загрузки данных');
+                    Repo.deleteLocalRepoArchive();
+                    return;
+                }
+
+                Write.console.correct('Данные успешно загружены');
+                var decryptCallback = (error) => {
+                    if (error) {
+                        Write.console.error('Ошибка расшифровки архива');
+                        Repo.deleteLocalRepoArchive();
+                        return;
+                    }
+
                     // Если не было локальной копии репозитория, то установить источник на скаченный
                     let change = Repo.checkLocalRepo();
                     // Распаковка архива с локальной копией репозитория
@@ -62,10 +74,13 @@ switch (Consts.command) {
                         if ((Consts.arg1 != 'repo') && (Consts.arg2 != 'repo'))
                             Repo.pullLocalToCurrent();
                     });
+                };
+                if ((Consts.arg1 != 'nocrypt') || (Consts.arg2 != 'nocrypt')) {
+                    // Расшифровка архива
+                    Repo.decryptLocalRepoArchive(decryptCallback);
                 }
                 else {
-                    Write.console.error('Ошибка загрузки данных');
-                    Repo.deleteLocalRepoArchive();
+                    decryptCallback(false);
                 }
             });
         }
@@ -97,10 +112,19 @@ switch (Consts.command) {
         // Удаление архива, если есть
         Repo.deleteLocalRepoArchive();
         // Получение с архива сервера
-        YandexDisk.receiveServerRepoArchive( (Consts.arg3 != 'nocrypt'), error => {
-            if (error) 
+        YandexDisk.receiveServerRepoArchive(error => {
+            if (error) {
                 Write.console.error('Ошибка загрузки данных');
-            else
+                return;
+            }
+
+            Write.console.correct('Данные успешно загружены');
+            var decryptCallback = (error) => {
+                if (error) {
+                    Write.console.error('Ошибка расшифровки архива');
+                    return;
+                }
+
                 // Распаковка архива с локальной копией репозитория
                 Repo.unpackLocalRepo(() => {
                     if (!Repo.checkLocalRepo())
@@ -110,6 +134,14 @@ switch (Consts.command) {
                         Repo.cloneLocalToCurrent();
                     }
                 });
+            };
+            if (Consts.arg3 != 'nocrypt') {
+                // Расшифровка архива
+                Repo.decryptLocalRepoArchive(decryptCallback);
+            }
+            else {
+                decryptCallback(false);
+            }
         });
         break;
 

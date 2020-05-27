@@ -87,10 +87,9 @@ function YandexDisk (Consts, Repo, Token) {
 
     /**
      * Получить с сервера запакованный репозиторий
-     * @param {boolean} decrypt Расшифровать ли архив после получения
      * @param {(error: boolean) => void} callback Функция обратного вызова
      */
-    var ReceiveServerRepoArchive = (decrypt, callback) => {
+    var ReceiveServerRepoArchive = (callback) => {
         if (typeof callback === 'function') {
             // Получить ссылку для скачивания
             GetReceiveURL((error, href) => {
@@ -102,25 +101,13 @@ function YandexDisk (Consts, Repo, Token) {
                         port: urlObject.port,
                         path: urlObject.path
                     }, response => {
-                        if (response.statusCode == 200)
+                        if (response.statusCode == 200) {
                             // Извлечение файла
                             response.pipe(fs.createWriteStream(Consts.pathLocalRepoArchive)).on('finish', () => {
                                 Write.file.correct('Файл получен', response.statusCode);
-                                if (decrypt)
-                                    // Расшифровка архива
-                                    Repo.decryptLocalRepoArchive(error => {
-                                        if (error) {
-                                            Write.file.error('Ошибка расшифровки архива');
-                                            callback(true);
-                                        }
-                                        else {
-                                            Write.file.info('Архив расшифрован');
-                                            callback(false);
-                                        }
-                                    });
-                                else
-                                    callback(false);
+                                callback(false);
                             });
+                        }
                         else if (response.statusCode == 302) {
                             Write.file.info('Файл доступен по другому пути');
                             href = response.headers.location;
@@ -131,25 +118,13 @@ function YandexDisk (Consts, Repo, Token) {
                                 port: urlObject.port,
                                 path: urlObject.path
                             }, response => {
-                                if (response.statusCode == 200)
+                                if (response.statusCode == 200) {
                                     // Извлечение файла
                                     response.pipe(fs.createWriteStream(Consts.pathLocalRepoArchive)).on('finish', () => {
                                         Write.file.correct('Файл получен', response.statusCode);
-                                        if (decrypt)
-                                            // Расшифровка архива
-                                            Repo.decryptLocalRepoArchive(error => {
-                                                if (error) {
-                                                    Write.file.error('Ошибка расшифровки архива');
-                                                    callback(true);
-                                                }
-                                                else {
-                                                    Write.file.info('Архив расшифрован');
-                                                    callback(false);
-                                                }
-                                            });
-                                        else
-                                            callback(false);
+                                        callback(false);
                                     });
+                                }
                                 else {
                                     Write.file.error('Ошибка загрузки файла', response.statusCode);
                                     callback(true);
