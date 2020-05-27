@@ -48,26 +48,20 @@ switch (Consts.command) {
         if (Repo.checkCurrentRepo()) {
             // Удаление архива, если есть
             Repo.deleteLocalRepoArchive();
-            // Получение с архива сервера
+            // Получение архива с сервера
             YandexDisk.receiveServerRepoArchive(error => {
                 if (error) {
                     Write.console.error('Ошибка загрузки данных');
-                    Repo.deleteLocalRepoArchive();
                     return;
                 }
 
                 Write.console.correct('Данные успешно загружены');
-                var decryptCallback = (error) => {
-                    if (error) {
-                        Write.console.error('Ошибка расшифровки архива');
-                        Repo.deleteLocalRepoArchive();
-                        return;
-                    }
-
+                var callback = () => {
                     // Если не было локальной копии репозитория, то установить источник на скаченный
                     let change = Repo.checkLocalRepo();
                     // Распаковка архива с локальной копией репозитория
                     Repo.unpackLocalRepo(() => {
+                        Write.console.correct('Архив распакован');
                         // Установка источника
                         if (change)
                             Repo.changeCurrentRepoServer();
@@ -75,12 +69,21 @@ switch (Consts.command) {
                             Repo.pullLocalToCurrent();
                     });
                 };
-                if ((Consts.arg1 != 'nocrypt') || (Consts.arg2 != 'nocrypt')) {
+                if ((Consts.arg1 != 'nocrypt') && (Consts.arg2 != 'nocrypt')) {
                     // Расшифровка архива
-                    Repo.decryptLocalRepoArchive(decryptCallback);
+                    Repo.decryptLocalRepoArchive((error) => {
+                        if (error) {
+                            Write.console.error('Ошибка расшифровки архива');
+                            Repo.deleteLocalRepoArchive();
+                            return;
+                        }
+    
+                        Write.console.correct('Архив расшифрован');
+                        callback();
+                    });
                 }
                 else {
-                    decryptCallback(false);
+                    callback();
                 }
             });
         }
@@ -111,7 +114,7 @@ switch (Consts.command) {
         Consts.setNames(Consts.arg1, Consts.arg2);
         // Удаление архива, если есть
         Repo.deleteLocalRepoArchive();
-        // Получение с архива сервера
+        // Получение архива с сервера
         YandexDisk.receiveServerRepoArchive(error => {
             if (error) {
                 Write.console.error('Ошибка загрузки данных');
@@ -119,28 +122,32 @@ switch (Consts.command) {
             }
 
             Write.console.correct('Данные успешно загружены');
-            var decryptCallback = (error) => {
-                if (error) {
-                    Write.console.error('Ошибка расшифровки архива');
-                    return;
-                }
-
+            var callback = () => {
                 // Распаковка архива с локальной копией репозитория
                 Repo.unpackLocalRepo(() => {
                     if (!Repo.checkLocalRepo())
                         Write.console.error('Ошибка распаковки данных');
                     else {
-                        Write.console.correct('Данные успешно загружены');
+                        Write.console.correct('Архив распакован');
                         Repo.cloneLocalToCurrent();
                     }
                 });
             };
             if (Consts.arg3 != 'nocrypt') {
                 // Расшифровка архива
-                Repo.decryptLocalRepoArchive(decryptCallback);
+                Repo.decryptLocalRepoArchive((error) => {
+                    if (error) {
+                        Write.console.error('Ошибка расшифровки архива');
+                        Repo.deleteLocalRepoArchive();
+                        return;
+                    }
+    
+                    Write.console.correct('Архив расшифрован');
+                    callback();
+                });
             }
             else {
-                decryptCallback(false);
+                callback();
             }
         });
         break;

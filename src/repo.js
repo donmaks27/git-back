@@ -271,33 +271,43 @@ function Repo (Consts) {
      * @param {(error: boolean) => void} callback Функция обратного вызова
      */
     var EncryptLocalRepoArchive = (callback) => {
-        if (callback && (typeof callback === 'function')) {
-            GetCryptKey((error, key) => {
-                if (error) {
-                    Write.file.error('Ошибка получения ключа шифрования');
-                    callback(true);
-                }
-                else {
-                    fs.readFile(Consts.pathLocalRepoArchive, (error, data) => {
-                        if (error) {
-                            Write.file.error('Ошибка чтения локальной копии архива: ' + error.message);
-                            callback(true);
-                        }
-                        else {
-                            data = Buffer.from(Crypt.aes.encrypt(data.toString('binary'), key), 'binary');
-                            fs.writeFile(Consts.pathLocalRepoArchive, data, error => {
-                                if (error) {
-                                    Write.file.error('Ошибка записи в локальную копию архива: ' + error.message);
-                                    callback(true);
-                                }
-                                else
-                                    callback(false);
-                            });
-                        }
-                    });
-                }
-            });
+        if (typeof callback !== 'function') {
+            return;
         }
+
+        if (!CheckLocalRepoArchive()) {
+            Write.file.error('Не найден архив с локальной копией репозитория');
+            callback(true);
+            return;
+        }
+
+        GetCryptKey((error, key) => {
+            if (error) {
+                Write.file.error('Ошибка получения ключа шифрования');
+                callback(true);
+                return;
+            }
+            
+            fs.readFile(Consts.pathLocalRepoArchive, (error, data) => {
+                if (error) {
+                    Write.file.error('Ошибка чтения локальной копии архива: ' + error.message);
+                    callback(true);
+                    return;
+                }
+                
+                data = Buffer.from(Crypt.aes.encrypt(data.toString('binary'), key), 'binary');
+                fs.writeFile(Consts.pathLocalRepoArchive, data, error => {
+                    if (error) {
+                        Write.file.error('Ошибка записи в локальную копию архива: ' + error.message);
+                        callback(true);
+                    }
+                    else {
+                        Write.file.info('Архив зашифрован');
+                        callback(false);
+                    }
+                });
+            });
+        });
     }
 
     /**
@@ -305,42 +315,50 @@ function Repo (Consts) {
      * @param {(error: boolean) => void} callback Функция обратного вызова
      */
     var DecryptLocalRepoArchive = (callback) => {
-        if (callback && (typeof callback === 'function')) {
-            GetCryptKey((error, key) => {
-                if (error) {
-                    Write.file.error('Ошибка получения ключа шифрования');
-                    callback(true);
-                }
-                else {
-                    fs.readFile(Consts.pathLocalRepoArchive, (error, data) => {
-                        if (error) {
-                            Write.file.error('Ошибка чтения локальной копии архива: ' + error.message);
-                            callback(true);
-                        }
-                        else {
-                            data = Crypt.aes.decrypt(data.toString('binary'), key);
-                            if (data == null) {
-                                Write.file.error('Ошибка расшифровки архива');
-                                callback(true);
-                            }
-                            else {
-                                data = Buffer.from(data, 'binary');
-                                fs.writeFile(Consts.pathLocalRepoArchive, data, error => {
-                                    if (error) {
-                                        Write.file.error('Ошибка записи в локальную копию архива: ' + error.message);
-                                        callback(true);
-                                    }
-                                    else {
-                                        Write.file.info('Архив расшифрован');
-                                        callback(false);
-                                    }
-                                });
-                            }
-                        }
-                    });
-                }
-            });
+        if (typeof callback !== 'function') {
+            return;
         }
+
+        if (!CheckLocalRepoArchive()) {
+            Write.file.error('Не найден архив с локальной копией репозитория');
+            callback(true);
+            return;
+        }
+
+        GetCryptKey((error, key) => {
+            if (error) {
+                Write.file.error('Ошибка получения ключа шифрования');
+                callback(true);
+                return;
+            }
+
+            fs.readFile(Consts.pathLocalRepoArchive, (error, data) => {
+                if (error) {
+                    Write.file.error('Ошибка чтения локальной копии архива: ' + error.message);
+                    callback(true);
+                    return;
+                }
+                
+                data = Crypt.aes.decrypt(data.toString('binary'), key);
+                if (data == null) {
+                    Write.file.error('Ошибка расшифровки архива');
+                    callback(true);
+                    return;
+                }
+                
+                data = Buffer.from(data, 'binary');
+                fs.writeFile(Consts.pathLocalRepoArchive, data, error => {
+                    if (error) {
+                        Write.file.error('Ошибка записи в локальную копию архива: ' + error.message);
+                        callback(true);
+                    }
+                    else {
+                        Write.file.info('Архив расшифрован');
+                        callback(false);
+                    }
+                });
+            });
+        });
     }
 
     /**
