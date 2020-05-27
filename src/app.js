@@ -28,8 +28,12 @@ switch (Consts.command) {
                 Repo.pushCurrentToLocal();
             // Упаковка локальной копии репозитория в архив
             Repo.packLocalRepo(() => {
-                Write.console.correct('Архив запакован');
+                if (!Repo.checkLocalRepoArchive()) {
+                    Write.console.error('Ошибка архивации репозитория');
+                    return;
+                }
 
+                Write.console.correct('Архив запакован');
                 var callback = () => {
                     // Отправка архива на сервер
                     YandexDisk.sendLocalRepoArchive((error) => {
