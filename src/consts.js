@@ -38,10 +38,15 @@ function Consts () {
      */
     this.pathYandexDiskAppID = path.join(this.pathCredentials, 'yandexDiskAppID.json');
     /**
-     * Путь к файлу с токеном
+     * Путь к файлу с токеном для Яндекс.Диска
      * @type {string}
      */
     this.pathYandexDiskToken = path.join(this.pathCredentials, 'yandexDiskToken.json');
+    /**
+     * Путь к файлу с аккаунтом для Яндекс.Облака
+     * @type {string}
+     */
+    this.pathYandexCloudAccount = path.join(this.pathCredentials, 'yandexCloudAccount.json');
     /**
      * Путь к текущей директории, из которой вызывается git-back
      * @type {string}

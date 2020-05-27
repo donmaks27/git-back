@@ -22,6 +22,17 @@ var AES_GenerateKey = () => {
     }
     return result;
 }
+/**
+ * Генерация ключа для AES шифрования
+ * @param {"binary" | "utf8" | "base64" | "hex"} encodeTarget Кодировка результирующей строки
+ * @returns {{key: string, iv: string}} Ключ AES
+ */
+var AES_GenerateKey_ChangeEncode = (encodeTarget) => {
+    let key = AES_GenerateKey();
+    key.key = ChangeEncode(key.key, encodeTarget, 'binary');
+    key.iv = ChangeEncode(key.iv, encodeTarget, 'binary');
+    return key;
+}
 
 /**
  * Шифрование AES
@@ -40,6 +51,20 @@ var AES_Encrypt = (str, key) => {
     return result;
 }
 /**
+ * Шифрование AES
+ * @param {string} str Исходная строка
+ * @param {{key: string, iv: string}} key Ключ шифрования
+ * @param {"binary" | "utf8" | "base64" | "hex"} encodeSource Кодировка исходной строки
+ * @param {"binary" | "utf8" | "base64" | "hex"} encodeTarget Кодировка результирующей строки
+ * @returns {string} Зашифрованная строка
+ */
+var AES_Encrypt_ChangeEncode = (str, key, encodeSource, encodeTarget) => {
+    let result = ChangeEncode(str, 'binary', encodeSource);
+    result = AES_Encrypt(result, key);
+    result = ChangeEncode(result, encodeTarget, 'binary');
+    return result;
+}
+/**
  * Дешифрование AES
  * @param {string} str Исходная строка
  * @param {{key: string, iv: string}} key Ключ шифрования
@@ -53,6 +78,20 @@ var AES_Decrypt = (str, key) => {
     catch (error) {
         result = null;
     }
+    return result;
+}
+/**
+ * Дешифрование AES
+ * @param {string} str Исходная строка
+ * @param {{key: string, iv: string}} key Ключ шифрования
+ * @param {"binary" | "utf8" | "base64" | "hex"} encodeSource Кодировка исходной строки
+ * @param {"binary" | "utf8" | "base64" | "hex"} encodeTarget Кодировка результирующей строки
+ * @returns {string} Дешифрованная строка
+ */
+var AES_Decrypt_ChangeEncode = (str, key, encodeSource, encodeTarget) => {
+    let result = ChangeEncode(str, 'binary', encodeSource);
+    result = AES_Decrypt(result, key);
+    result = ChangeEncode(result, encodeTarget, 'binary');
     return result;
 }
 
@@ -94,6 +133,18 @@ var SHA256 = str => {
     }
     return result;
 }
+/**
+ * Хэш SHA256 со сменой кодировки
+ * @param {string} str Исходная строка
+ * @param {"binary" | "utf8" | "base64" | "hex"} encodeSource Кодировка исходной строки
+ * @param {"binary" | "utf8" | "base64" | "hex"} encodeTarget Кодировка результирующей строки
+ * @returns {string} Хэш строки
+ */
+var SHA256_ChangeEncode = (str, encodeSource, encodeTarget) => {
+    let result = ChangeEncode(str, 'binary', encodeSource);
+    result = SHA256(result);
+    return ChangeEncode(result, encodeTarget, 'binary');
+}
 
 
 
@@ -115,6 +166,19 @@ var HMACSHA256 = (str, key) => {
         result = null;
     }
     return result;
+}
+/**
+ * Хэш HMAC-SHA256 со сменой кодировки
+ * @param {string} str Исходная строка
+ * @param {string} key Ключ для хэша
+ * @param {"binary" | "utf8" | "base64" | "hex"} encodeSource Кодировка исходной строки
+ * @param {"binary" | "utf8" | "base64" | "hex"} encodeTarget Кодировка результирующей строки
+ * @returns {string} Хэш строки
+ */
+var HMACSHA256_ChangeEncode = (str, key, encodeSource, encodeTarget) => {
+    let result = ChangeEncode(str, 'binary', encodeSource);
+    result = HMACSHA256(result, key);
+    return ChangeEncode(result, encodeTarget, 'binary');
 }
 
 
@@ -154,9 +218,14 @@ var ChangeEncode = (source, encodeTarget, encodeSource) => {
 
 module.exports.aes = {
     encrypt: AES_Encrypt,
+    encrypt_changeEncode: AES_Encrypt_ChangeEncode,
     decrypt: AES_Decrypt,
-    generateKey: AES_GenerateKey
+    decrypt_changeEncode: AES_Decrypt_ChangeEncode,
+    generateKey: AES_GenerateKey,
+    generateKey_changeEncode: AES_GenerateKey_ChangeEncode
 }
 module.exports.sha256 = SHA256;
+module.exports.sha256_changeEncode = SHA256_ChangeEncode;
 module.exports.hmacsha256 = HMACSHA256;
+module.exports.hmacsha256_changeEncode = HMACSHA256_ChangeEncode;
 module.exports.changeEncode = ChangeEncode;

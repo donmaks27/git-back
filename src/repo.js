@@ -349,8 +349,8 @@ function Repo (Consts) {
         if ((callback !== null) && (typeof callback === 'function')) {
             GetRepoCrypt((error, repoCrypt) => {
                 if (!repoCrypt.crypt) {
-                    let key = Crypt.aes.generateKey();
-                    repoCrypt.crypt = Crypt.changeEncode(key.key, 'base64', 'binary') + ':' + Crypt.changeEncode(key.iv, 'base64', 'binary');
+                    let key = Crypt.aes.generateKey_changeEncode('base64');
+                    repoCrypt.crypt = key.key + ':' + key.iv;
                     fs.writeFile(Consts.pathRepoCrypt, JSON.stringify(repoCrypt), error => {
                         if (error)
                             callback(true);
