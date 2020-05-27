@@ -137,10 +137,6 @@ function YandexCloudRequestBuilder (Consts) {
 
                 request.end();
             });
-            // Добавление архива в запрос
-            /*fs.createReadStream(Consts.pathLocalRepoArchive).pipe(request).on('finish', () => {
-                request.end();
-            });*/
         });
     }
 

@@ -1,5 +1,6 @@
 // Модуль для общения с Яндекс.Облаком
 
+var http = require('http');
 var fs = require('fs');
 var path = require('path');
 var xml = require('xml2js');
@@ -19,6 +20,44 @@ function YandexCloud (Consts, RequestBuilder) {
      * Отправить запакованную локальную копию репозитория на сервер
      * @param {(error: boolean) => void} callback Функция обратного вызова
      */
+    var SendLocalRepoArchive = (callback) => {
+        if (typeof callback !== 'function') {
+            return;
+        }
+
+        fs.readFile(Consts.pathLocalRepoArchive, {
+            encoding: 'binary'
+        }, (error, data) => {
+            if (error) {
+                Write.file.error(error.message, error.code);
+                callback(true);
+                return;
+            }
+
+            let path = '/' + Consts.nameLocalProject + '/' + Consts.nameLocalRepoArchive;
+            RequestBuilder.sendPutRequest(path, {}, data, (error, response) => {
+                if (error) {
+                    Write.file.error('Ошибка отправки файла');
+                    callback(false);
+                    return;
+                }
+
+                if (!IsResponseCodeSuccess(response)) {
+                    Write.file.error('Ошибка отправки файла', response.statusCode);
+                    callback(true);
+                }
+                else {
+                    Write.file.correct('Файл отправлен', response.statusCode);
+                    callback(false);
+                }
+            });
+        });
+    }
+
+    /**
+     * Отправить запакованную локальную копию репозитория на сервер
+     * @param {(error: boolean) => void} callback Функция обратного вызова
+     */
     var ReceiveServerRepoArchive = (callback) => {
         if (typeof callback !== 'function') {
             return;
@@ -32,7 +71,7 @@ function YandexCloud (Consts, RequestBuilder) {
                 return;
             }
 
-            if (response.statusCode != 200) {
+            if (!IsResponseCodeSuccess(response)) {
                 xml.parseString(data, (error, parsedData) => {
                     if (error) {
                         Write.file.error('Некорректный формат ответа. ' + error.message);
@@ -40,7 +79,7 @@ function YandexCloud (Consts, RequestBuilder) {
                         return;
                     }
 
-                    Write.file.error('Ошибка загрузки файла. ' + parsedData.Error.Message[0], response.statusCode);
+                    Write.file.error('Ошибка получения файла. ' + parsedData.Error.Message[0], response.statusCode);
                     callback(true);
                 });
                 return;
@@ -146,7 +185,7 @@ function YandexCloud (Consts, RequestBuilder) {
                     return;
                 }
 
-                if (Math.floor(response.statusCode / 100) != 2) {
+                if (!IsResponseCodeSuccess(response)) {
                     Write.file.error('Ошибка получения списка объектов после ключа \'' + lastKey + '\'. ' + parsedData.Error.Message[0], response.statusCode);
                     callback(true);
                     return;
@@ -179,7 +218,15 @@ function YandexCloud (Consts, RequestBuilder) {
         });
     }
 
-    /* this.sendLocalRepoArchive = SendLocalRepoArchive;*/
+    /**
+     * Проверить код ответа
+     * @param {http.IncomingMessage} response Ответ на запрос
+     */
+    var IsResponseCodeSuccess = (response) => {
+        return response && (Math.floor(response.statusCode / 100) == 2);
+    }
+
+    this.sendLocalRepoArchive = SendLocalRepoArchive;
     this.receiveServerRepoArchive = ReceiveServerRepoArchive;
     this.getFullReposList = GetFullReposList;
 }
