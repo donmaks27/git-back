@@ -25,9 +25,7 @@ function YandexCloud (Consts, RequestBuilder) {
             return;
         }
 
-        fs.readFile(Consts.pathLocalRepoArchive, {
-            encoding: 'binary'
-        }, (error, data) => {
+        fs.readFile(Consts.pathLocalRepoArchive, (error, data) => {
             if (error) {
                 Write.file.error(error.message, error.code);
                 callback(true);
@@ -43,8 +41,15 @@ function YandexCloud (Consts, RequestBuilder) {
                 }
 
                 if (!IsResponseCodeSuccess(response)) {
-                    Write.file.error('Ошибка отправки файла', response.statusCode);
-                    callback(true);
+                    let body = '';
+                    response.setEncoding('utf-8');
+                    response.on('data', function (chunk) {
+                        body += chunk;
+                    });
+                    response.on('end', function () {
+                        Write.file.error('Ошибка отправки файла. ' + data, response.statusCode);
+                        callback(true);
+                    });
                 }
                 else {
                     Write.file.correct('Файл отправлен', response.statusCode);
@@ -64,7 +69,7 @@ function YandexCloud (Consts, RequestBuilder) {
         }
         
         let path = '/' + Consts.nameLocalProject + '/' + Consts.nameLocalRepoArchive;
-        RequestBuilder.sendGetRequest(path, {}, (error, response, data) => {
+        RequestBuilder.sendGetRequest(path, {}, (error, response) => {
             if (error) {
                 Write.file.error('Ошибка получения файла');
                 callback(true);
@@ -72,15 +77,22 @@ function YandexCloud (Consts, RequestBuilder) {
             }
 
             if (!IsResponseCodeSuccess(response)) {
-                xml.parseString(data, (error, parsedData) => {
-                    if (error) {
-                        Write.file.error('Некорректный формат ответа. ' + error.message);
+                let body = '';
+                response.setEncoding('utf-8');
+                response.on('data', function (chunk) {
+                    body += chunk;
+                });
+                response.on('end', function () {
+                    xml.parseString(body, (error, parsedData) => {
+                        if (error) {
+                            Write.file.error('Некорректный формат ответа. ' + error.message);
+                            callback(true);
+                            return;
+                        }
+    
+                        Write.file.error('Ошибка получения файла. ' + parsedData.Error.Message[0], response.statusCode);
                         callback(true);
-                        return;
-                    }
-
-                    Write.file.error('Ошибка получения файла. ' + parsedData.Error.Message[0], response.statusCode);
-                    callback(true);
+                    });
                 });
                 return;
             }
@@ -117,7 +129,10 @@ function YandexCloud (Consts, RequestBuilder) {
                 let currentObject = objectsList[objectIndex];
                 if (!currentObject.isFolder && (currentObject.name.match('^[^/]+/[^/]+\.git\.tar\.gz$') !== null)) {
                     let nameParts = currentObject.name.split('/');
-                    result[nameParts[0]] = path.basename(nameParts[1], '.git.tar.gz');
+                    if (!result[nameParts[0]]) {
+                        result[nameParts[0]] = [];
+                    }
+                    result[nameParts[0]].push(path.basename(nameParts[1], '.git.tar.gz'));
                 }
             }
             callback(false, result);
@@ -171,49 +186,56 @@ function YandexCloud (Consts, RequestBuilder) {
         if (lastKey && (lastKey !== '')) {
             queryParams['marker'] = lastKey;
         }
-        RequestBuilder.sendGetRequest('', queryParams, (error, response, data) => {
+        RequestBuilder.sendGetRequest('', queryParams, (error, response) => {
             if (error) {
                 Write.file.error('Ошибка получения списка объектов после ключа \'' + lastKey + '\'');
                 callback(true);
                 return;
             }
 
-            let parsedData = xml.parseString(data, (error, parsedData) => {
-                if (error) {
-                    Write.file.error('Некорректный формат ответа. ' + error.message);
-                    callback(true);
-                    return;
-                }
-
-                if (!IsResponseCodeSuccess(response)) {
-                    Write.file.error('Ошибка получения списка объектов после ключа \'' + lastKey + '\'. ' + parsedData.Error.Message[0], response.statusCode);
-                    callback(true);
-                    return;
-                }
-
-                if (!parsedData.ListBucketResult) {
-                    Write.file.error('Некорректный формат ответа, отсутсвует ключ ListBucketResult. ' + data);
-                    callback(true);
-                    return;
-                }
-                parsedData = parsedData.ListBucketResult;
-                Write.file.correct('Часть списка объектов загружена', response.statusCode);
+            let data = '';
+            response.setEncoding('utf-8');
+            response.on('data', function (chunk) {
+                data += chunk;
+            });
+            response.on('end', function () {
+                xml.parseString(data, (error, parsedData) => {
+                    if (error) {
+                        Write.file.error('Некорректный формат ответа. ' + error.message);
+                        callback(true);
+                        return;
+                    }
     
-                let result = {
-                    objects: []
-                };
-                result.isTrancated = parsedData.IsTruncated[0] === 'true';
-                result.nextMarker = result.isTrancated ? parsedData.NextMarker[0] : '';
-                for (let parsedDataContentIndex = 0; parsedDataContentIndex < parsedData.Contents.length; parsedDataContentIndex++) {
-                    let objectName = parsedData.Contents[parsedDataContentIndex].Key[0];
-                    let isFolder = objectName.endsWith('/');
-                    result.objects.push({
-                        isFolder: isFolder,
-                        name: objectName
-                    });
-                }
-    
-                callback(false, result);
+                    if (!IsResponseCodeSuccess(response)) {
+                        Write.file.error('Ошибка получения списка объектов после ключа \'' + lastKey + '\'. ' + parsedData.Error.Message[0], response.statusCode);
+                        callback(true);
+                        return;
+                    }
+                    
+                    if (!parsedData.ListBucketResult) {
+                        Write.file.error('Некорректный формат ответа, отсутсвует ключ ListBucketResult. ' + data);
+                        callback(true);
+                        return;
+                    }
+                    parsedData = parsedData.ListBucketResult;
+                    Write.file.correct('Часть списка объектов загружена', response.statusCode);
+        
+                    let result = {
+                        objects: []
+                    };
+                    result.isTrancated = parsedData.IsTruncated[0] === 'true';
+                    result.nextMarker = result.isTrancated ? parsedData.NextMarker[0] : '';
+                    for (let parsedDataContentIndex = 0; parsedDataContentIndex < parsedData.Contents.length; parsedDataContentIndex++) {
+                        let objectName = parsedData.Contents[parsedDataContentIndex].Key[0];
+                        let isFolder = objectName.endsWith('/');
+                        result.objects.push({
+                            isFolder: isFolder,
+                            name: objectName
+                        });
+                    }
+        
+                    callback(false, result);
+                });
             });
         });
     }

@@ -59,14 +59,7 @@ function YandexCloudRequestBuilder (Consts) {
                 headers: headers
             }, (response) => {
                 // Чтение тела ответа
-                let body = '';
-                response.setEncoding('utf-8');
-                response.on('data', function (chunk) {
-                    body += chunk;
-                });
-                response.on('end', function () {
-                    callback(false, response, body);
-                });
+                callback(false, response);
             });
     
             request.on('error', error => {
