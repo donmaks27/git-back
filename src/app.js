@@ -26,6 +26,15 @@ switch (Consts.command) {
         Yandex = YandexCloud;
         break;
 
+    // Инициализация репозитория
+    case 'init':
+        Consts.setNames( path.basename(path.dirname(Consts.pathCurrent)), path.basename(Consts.pathCurrent) );
+        // Инициализация пустого git-репозитория
+        if (!Repo.checkCurrentRepo()) {
+            Repo.initEmptyRepo();
+        }
+        break;
+
     // Удалить локальную копию репозитория
     case 'clear':
         Consts.setNames( path.basename(path.dirname(Consts.pathCurrent)), path.basename(Consts.pathCurrent) );
@@ -48,7 +57,7 @@ switch (Consts.command) {
 
     // Вывод справки
     case 'help':
-        console.log( Write.bold(Write.yellow('  (disk|cloud)') + Write.green(' init')) + Write.reset(Write.white(' - Инициализировать пустой git-репозиторий.')) );
+        console.log(  Write.bold(Write.green('  init')) + Write.reset(Write.white(' - Инициализировать пустой git-репозиторий.')) );
         console.log( Write.bold(Write.yellow('  (disk|cloud)') + Write.green(' push [repo] [nocrypt]')) + Write.reset(Write.white(' - Отправка данных на сервер.\n' + 
                                              '               ' +              '                      ' +                           '   Если указан параметр \'repo\', то без взятия сделанных изменений из текущего репозитория.\n' +
                                              '               ' +              '                      ' +                           '   Если указан параметр \'nocrypt\', то на сервер отправятся незашифрованные данные.')) );
@@ -71,15 +80,6 @@ if (Yandex == null) {
 }
 
 switch (Consts.action) {
-
-    // Инициализация репозитория
-    case 'init':
-        Consts.setNames( path.basename(path.dirname(Consts.pathCurrent)), path.basename(Consts.pathCurrent) );
-        // Инициализация пустого git-репозитория
-        if (!Repo.checkCurrentRepo()) {
-            Repo.initEmptyRepo();
-        }
-        break;
 
     // Отправка репозитория на сервер
     case 'push':
