@@ -26,6 +26,52 @@ switch (Consts.command) {
         Yandex = YandexCloud;
         break;
 
+    case 'migrate':
+        /**
+         * @type {YandexDisk}
+         */
+        let YandexFrom = null;
+        /**
+         * @type {YandexDisk}
+         */
+        let YandexTo = null;
+        switch (Consts.action) {
+            case 'disk-to-cloud':
+                YandexFrom = YandexDisk;
+                YandexTo = YandexCloud;
+                break;
+            case 'cloud-to-disk':
+                YandexFrom = YandexCloud;
+                YandexTo = YandexDisk;
+                break;
+            default:
+                Write.console.error('Не указано, откуда и куда переносить');
+        }
+        if ((YandexFrom != null) && (YandexTo != null)) {
+            Consts.setNames(Consts.arg1, Consts.arg2);
+            // Получение архива с сервера
+            YandexFrom.receiveServerRepoArchive((error) => {
+                if (error) {
+                    Write.console.error('Ошибка загрузки данных');
+                    return;
+                }
+    
+                Write.console.correct('Данные успешно загружены');
+                // Отправка архива на сервер
+                YandexTo.sendLocalRepoArchive((error) => {
+                    if (error) {
+                        Write.console.error('Ошибка отправки данных');
+                    }
+                    else {
+                        Write.console.correct('Данные успешно отправлены');
+                    }
+                    // Удаление архива
+                    Repo.deleteLocalRepoArchive();
+                });
+            });
+        }
+        break;
+
     // Инициализация репозитория
     case 'init':
         Consts.setNames( path.basename(path.dirname(Consts.pathCurrent)), path.basename(Consts.pathCurrent) );
@@ -59,14 +105,15 @@ switch (Consts.command) {
     case 'help':
         console.log(  Write.bold(Write.green('  init')) + Write.reset(Write.white(' - Инициализировать пустой git-репозиторий.')) );
         console.log( Write.bold(Write.yellow('  (disk|cloud)') + Write.green(' push [repo] [nocrypt]')) + Write.reset(Write.white(' - Отправка данных на сервер.\n' + 
-                                             '               ' +              '                      ' +                           '   Если указан параметр \'repo\', то без взятия сделанных изменений из текущего репозитория.\n' +
-                                             '               ' +              '                      ' +                           '   Если указан параметр \'nocrypt\', то на сервер отправятся незашифрованные данные.')) );
+                                             '              ' +              '                      ' +                           '   Если указан параметр \'repo\', то без взятия сделанных изменений из текущего репозитория.\n' +
+                                             '              ' +              '                      ' +                           '   Если указан параметр \'nocrypt\', то на сервер отправятся незашифрованные данные.')) );
         console.log( Write.bold(Write.yellow('  (disk|cloud)') + Write.green(' pull [repo] [nocrypt]')) + Write.reset(Write.white(' - Получение данных с сервера.\n' + 
-                                             '               ' +              '                      ' +                           '   Если указан параметр \'repo\', то без внесения изменений в текущий репозиторий.\n' +
-                                             '               ' +              '                      ' +                           '   Если указан параметр \'nocrypt\', то после получения данные не расшифруются.')) );
+                                             '              ' +              '                      ' +                           '   Если указан параметр \'repo\', то без внесения изменений в текущий репозиторий.\n' +
+                                             '              ' +              '                      ' +                           '   Если указан параметр \'nocrypt\', то после получения данные не расшифруются.')) );
         console.log( Write.bold(Write.yellow('  (disk|cloud)') + Write.green(' list')) + Write.reset(Write.white(' - Вывести список репозиториев на сервере.')) );
         console.log( Write.bold(Write.yellow('  (disk|cloud)') + Write.green(' clone')) + Write.yellow(' <project> <repo>') + Write.green(' [nocrypt]') + Write.reset(Write.white(' - Загрузить и клонировать репозиторий \'repo\' из проекта \'project\' с сервера.\n' +
-                                             '               ' +              '      ' +                '                 ' +              '          ' +                          '   Если указан параметр \'nocrypt\', то после получения данные не расшифруются.')) );
+                                             '              ' +              '      ' +                '                 ' +              '          ' +                          '   Если указан параметр \'nocrypt\', то после получения данные не расшифруются.')) );
+        console.log(  Write.bold(Write.green('  migrate')) + Write.yellow(' (disk-to-cloud|cloud-to-disk) <project> <repo>') + Write.reset(Write.white(' - Скопировать репозиторий из одного хранилища в другое.')) );
         console.log(  Write.bold(Write.green('  clear')) + Write.reset(Write.white(' - Удалить локальную копию репозитория.')) );
         console.log(  Write.bold(Write.green('  clear-all')) + Write.reset(Write.white(' - Удалить локальные копии всех репозиториев.')) );
         console.log(  Write.bold(Write.green('  url')) + Write.yellow(' <url>') + Write.reset(Write.white(' - Обработка URL схемы \'git-back://\'.')) );
