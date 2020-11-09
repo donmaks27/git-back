@@ -96,6 +96,16 @@ function Consts () {
      */
     this.nameLocalRepoArchive = '';
     /**
+     * Имя файла с версией репозитория
+     * @type {string}
+     */
+    this.nameRepoVersionFile = '';
+    /**
+     * Имя временного файла с версией репозитория
+     * @type {string}
+     */
+    this.nameRepoVersionTempFile = '';
+    /**
      * Папка, где хранятся локальные копии репозиториев текущего проекта
      * @type {string}
      */
@@ -110,6 +120,16 @@ function Consts () {
      * @type {string}
      */
     this.pathLocalRepoArchive = '';
+    /**
+     * Полный путь к файлу с версией репозитория
+     * @type {string}
+     */
+    this.pathLocalRepoVersionFile = '';
+    /**
+     * Полный путь к временному файлу с версией репозитория
+     * @type {string}
+     */
+    this.pathLocalRepoVersionTempFile = '';
 
     /* МЕТОДЫ */
 
@@ -125,10 +145,16 @@ function Consts () {
         this.nameLocalProject = project;
         this.nameLocalRepo = repo + '.git';
         this.nameLocalRepoArchive = this.nameLocalRepo + '.tar.gz';
+
+        this.nameRepoVersionFile = repo + '.version';
+        this.nameRepoVersionTempFile = this.nameRepoVersionFile + '.temp';
         
         this.pathLocalProject = path.join(this.pathReposLocal, this.nameLocalProject);
         this.pathLocalRepo = path.join(this.pathLocalProject, this.nameLocalRepo);
         this.pathLocalRepoArchive = path.join(this.pathLocalProject, this.nameLocalRepoArchive);
+        
+        this.pathLocalRepoVersionFile = path.join(this.pathLocalProject, this.nameRepoVersionFile);
+        this.pathLocalRepoVersionTempFile = path.join(this.pathLocalProject, this.nameRepoVersionTempFile);
 
         if (!fs.existsSync(this.pathReposLocal))
             fs.mkdirSync(this.pathReposLocal);

@@ -424,6 +424,38 @@ function Repo (Consts) {
         return fs.existsSync(Consts.pathRepoCrypt);
     }
 
+    /**
+     * @returns {number}
+     */
+    var GetRepoVersion = () => {
+        if (fs.existsSync(Consts.pathLocalRepoVersionFile)) {
+            let data = fs.readFileSync(Consts.pathLocalRepoVersionFile);
+            return Math.max(-1, parseInt(data.toString()));
+        }
+        return -1;
+    }
+    var IncrementLocalRepoVersion = () => {
+        let version = GetRepoVersion() + 1;
+        let data = version.toString();
+        fs.writeFileSync(Consts.pathLocalRepoVersionFile, data);
+    }
+
+    /**
+     * @returns {number}
+     */
+    var GetRepoTempVersion = () => {
+        if (fs.existsSync(Consts.pathLocalRepoVersionTempFile)) {
+            let data = fs.readFileSync(Consts.pathLocalRepoVersionTempFile);
+            return Math.max(-1, parseInt(data.toString()));
+        }
+        return -1;
+    }
+    var DeleteRepoTempVersion = () => {
+        if (fs.existsSync(Consts.pathLocalRepoVersionTempFile)) {
+            fs.unlinkSync(Consts.pathLocalRepoVersionTempFile);
+        }
+    }
+
     this.checkCurrentRepo = CheckCurrentRepo;
     this.checkLocalRepo = CheckLocalRepo;
     this.checkLocalRepoArchive = CheckLocalRepoArchive;
@@ -445,5 +477,11 @@ function Repo (Consts) {
 
     this.encryptLocalRepoArchive = EncryptLocalRepoArchive;
     this.decryptLocalRepoArchive = DecryptLocalRepoArchive;
+
+    this.getRepoVersion = GetRepoVersion;
+    this.incrementLocalRepoVersion = IncrementLocalRepoVersion;
+
+    this.getRepoTempVersion = GetRepoTempVersion;
+    this.deleteRepoTempVersion = DeleteRepoTempVersion;
 }
 module.exports = Repo;

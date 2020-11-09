@@ -104,9 +104,10 @@ switch (Consts.command) {
     // Вывод справки
     case 'help':
         console.log(  Write.bold(Write.green('  init')) + Write.reset(Write.white(' - Инициализировать пустой git-репозиторий.')) );
-        console.log( Write.bold(Write.yellow('  (disk|cloud)') + Write.green(' push [repo] [nocrypt]')) + Write.reset(Write.white(' - Отправка данных на сервер.\n' + 
-                                             '              ' +              '                      ' +                           '   Если указан параметр \'repo\', то без взятия сделанных изменений из текущего репозитория.\n' +
-                                             '              ' +              '                      ' +                           '   Если указан параметр \'nocrypt\', то на сервер отправятся незашифрованные данные.')) );
+        console.log( Write.bold(Write.yellow('  (disk|cloud)') + Write.green(' push [repo] [nocrypt] [force]')) + Write.reset(Write.white(' - Отправка данных на сервер.\n' + 
+                                             '              ' +              '                              ' +                           '   Если указан параметр \'repo\', то без взятия сделанных изменений из текущего репозитория.\n' +
+                                             '              ' +              '                              ' +                           '   Если указан параметр \'nocrypt\', то на сервер отправятся незашифрованные данные.\n' +
+                                             '              ' +              '                              ' +                           '   Если указан параметр \'force\', то отправить на сервер без проверки на версии репозитория.')) );
         console.log( Write.bold(Write.yellow('  (disk|cloud)') + Write.green(' pull [repo] [nocrypt]')) + Write.reset(Write.white(' - Получение данных с сервера.\n' + 
                                              '              ' +              '                      ' +                           '   Если указан параметр \'repo\', то без внесения изменений в текущий репозиторий.\n' +
                                              '              ' +              '                      ' +                           '   Если указан параметр \'nocrypt\', то после получения данные не расшифруются.')) );
@@ -131,105 +132,13 @@ switch (Consts.action) {
     // Отправка репозитория на сервер
     case 'push':
         Consts.setNames( path.basename(path.dirname(Consts.pathCurrent)), path.basename(Consts.pathCurrent) );
-        // Проверка на корректность текущей директории
-        if (Repo.checkCurrentRepo()) {
-            // Создание локальной копии репозитория
-            Repo.cloneCurrentToLocal();
-            // Если указано - отправить копию репозитория на сервер сразу, без внесения сделанных изменений
-            if ((Consts.arg1 != 'repo') && (Consts.arg2 != 'repo'))
-                Repo.pushCurrentToLocal();
-            // Упаковка локальной копии репозитория в архив
-            Repo.packLocalRepo(() => {
-                if (!Repo.checkLocalRepoArchive()) {
-                    Write.console.error('Ошибка архивации репозитория');
-                    return;
-                }
-
-                Write.console.correct('Архив запакован');
-                var callback = () => {
-                    // Отправка архива на сервер
-                    Yandex.sendLocalRepoArchive((error) => {
-                        if (error) {
-                            Write.console.error('Ошибка отправки данных');
-                        }
-                        else {
-                            Write.console.correct('Данные успешно отправлены');
-                        }
-                        // Удаление архива
-                        Repo.deleteLocalRepoArchive();
-                    });
-                };
-
-                if ((Consts.arg1 != 'nocrypt') && (Consts.arg2 != 'nocrypt')) {
-                    // Шифрование архива
-                    Repo.encryptLocalRepoArchive((error) => {
-                        if (error) {
-                            Write.console.error('Ошибка шифрования архива');
-                            Repo.deleteLocalRepoArchive();
-                            return;
-                        }
-
-                        Write.console.correct('Архив зашифрован');
-                        callback();
-                    });
-                }
-                else {
-                    callback();
-                }
-            });
-        }
-        else 
-            Write.console.error('Данная директория не содержит git репозитория');
+        CommandSync();
         break;
         
     // Получение репозитория с сервера
     case 'pull':
         Consts.setNames( path.basename(path.dirname(Consts.pathCurrent)), path.basename(Consts.pathCurrent) );
-        // Проверка на корректность текущей директории
-        if (Repo.checkCurrentRepo()) {
-            // Удаление архива, если есть
-            Repo.deleteLocalRepoArchive();
-            // Получение архива с сервера
-            Yandex.receiveServerRepoArchive(error => {
-                if (error) {
-                    Write.console.error('Ошибка загрузки данных');
-                    return;
-                }
-
-                Write.console.correct('Данные успешно загружены');
-                var callback = () => {
-                    // Если не было локальной копии репозитория, то установить источник на скаченный
-                    let change = Repo.checkLocalRepo();
-                    // Распаковка архива с локальной копией репозитория
-                    Repo.unpackLocalRepo(() => {
-                        Write.console.correct('Архив распакован');
-                        // Установка источника
-                        if (change)
-                            Repo.changeCurrentRepoServer();
-                        if ((Consts.arg1 != 'repo') && (Consts.arg2 != 'repo'))
-                            Repo.pullLocalToCurrent();
-                    });
-                };
-                if ((Consts.arg1 != 'nocrypt') && (Consts.arg2 != 'nocrypt')) {
-                    // Расшифровка архива
-                    Repo.decryptLocalRepoArchive((error) => {
-                        if (error) {
-                            Write.console.error('Ошибка расшифровки архива');
-                            Repo.deleteLocalRepoArchive();
-                            return;
-                        }
-    
-                        Write.console.correct('Архив расшифрован');
-                        callback();
-                    });
-                }
-                else {
-                    callback();
-                }
-            });
-        }
-        else 
-            Write.console.error('Данная директория не содержит git репозитория');
+        CommandPull();
         break;
 
     // Список репозиториев на сервере
@@ -271,6 +180,7 @@ switch (Consts.action) {
                     else {
                         Write.console.correct('Архив распакован');
                         Repo.cloneLocalToCurrent();
+                        Yandex.receiveServerRepoVersion(true, error => {});
                     }
                 });
             };
@@ -295,4 +205,147 @@ switch (Consts.action) {
 
     default:
         Write.console.error('Не указано действие');
+}
+
+function CommandSync() {
+    let forcePush = !((Consts.arg1 != 'force') && (Consts.arg2 != 'force') && (Consts.arg3 != 'force'));
+    if (forcePush) {
+        CommandPush();
+    }
+    else {
+        GetServerRepoVersion((serverVersion) => {
+            let localVesion = Repo.getRepoVersion();
+            if (serverVersion > localVesion) {
+                Write.console.warning('Версия репозитория на сервере новее локальной, необходимо сначала выполнить команду pull')
+            }
+            else {
+                CommandPush();
+            }
+        });
+    }
+}
+
+function CommandPush() {
+    // Проверка на корректность текущей директории
+    if (Repo.checkCurrentRepo()) {
+        // Создание локальной копии репозитория
+        Repo.cloneCurrentToLocal();
+        // Если указано - отправить копию репозитория на сервер сразу, без внесения сделанных изменений
+        if ((Consts.arg1 != 'repo') && (Consts.arg2 != 'repo') && (Consts.arg3 != 'repo'))
+            Repo.pushCurrentToLocal();
+        // Упаковка локальной копии репозитория в архив
+        Repo.packLocalRepo(() => {
+            if (!Repo.checkLocalRepoArchive()) {
+                Write.console.error('Ошибка архивации репозитория');
+                return;
+            }
+
+            Write.console.correct('Архив запакован');
+            var callback = () => {
+                // Отправка архива на сервер
+                Yandex.sendLocalRepoArchive((error) => {
+                    if (error) {
+                        Write.console.error('Ошибка отправки данных');
+                    }
+                    else {
+                        Write.console.correct('Данные успешно отправлены');
+
+                        Repo.incrementLocalRepoVersion();
+                        Yandex.sendLocalRepoVersion((error) => {});
+                    }
+                    // Удаление архива
+                    Repo.deleteLocalRepoArchive();
+                });
+            };
+
+            if ((Consts.arg1 != 'nocrypt') && (Consts.arg2 != 'nocrypt') && (Consts.arg2 != 'nocrypt')) {
+                // Шифрование архива
+                Repo.encryptLocalRepoArchive((error) => {
+                    if (error) {
+                        Write.console.error('Ошибка шифрования архива');
+                        Repo.deleteLocalRepoArchive();
+                        return;
+                    }
+
+                    Write.console.correct('Архив зашифрован');
+                    callback();
+                });
+            }
+            else {
+                callback();
+            }
+        });
+    }
+    else 
+        Write.console.error('Данная директория не содержит git репозитория');
+}
+
+function CommandPull(successCallback) {
+    // Проверка на корректность текущей директории
+    if (Repo.checkCurrentRepo()) {
+        // Удаление архива, если есть
+        Repo.deleteLocalRepoArchive();
+        // Получение архива с сервера
+        Yandex.receiveServerRepoArchive(error => {
+            if (error) {
+                Write.console.error('Ошибка загрузки данных');
+                return;
+            }
+
+            Write.console.correct('Данные успешно загружены');
+            var decryptCallback = () => {
+                // Если не было локальной копии репозитория, то установить источник на скаченный
+                let change = Repo.checkLocalRepo();
+                // Распаковка архива с локальной копией репозитория
+                Repo.unpackLocalRepo(() => {
+                    Write.console.correct('Архив распакован');
+                    // Установка источника
+                    if (change)
+                        Repo.changeCurrentRepoServer();
+                    if ((Consts.arg1 != 'repo') && (Consts.arg2 != 'repo'))
+                        Repo.pullLocalToCurrent();
+                    Yandex.receiveServerRepoVersion(true, (error) => {
+                        if (typeof successCallback === 'function') {
+                            successCallback();
+                        }
+                    });
+                });
+            };
+            if ((Consts.arg1 != 'nocrypt') && (Consts.arg2 != 'nocrypt')) {
+                // Расшифровка архива
+                Repo.decryptLocalRepoArchive((error) => {
+                    if (error) {
+                        Write.console.error('Ошибка расшифровки архива');
+                        Repo.deleteLocalRepoArchive();
+                        return;
+                    }
+
+                    Write.console.correct('Архив расшифрован');
+                    decryptCallback();
+                });
+            }
+            else {
+                decryptCallback();
+            }
+        });
+    }
+    else  {
+        Write.console.error('Данная директория не содержит git репозитория');
+    }
+}
+
+/**
+ * @param {(version: number) => void} callback
+ */
+function GetServerRepoVersion(callback) {
+    Yandex.receiveServerRepoVersion(false, (error) => {
+        if (error) {
+            callback(-1);
+        }
+        else {
+            let version = Repo.getRepoTempVersion();
+            Repo.deleteRepoTempVersion();
+            callback(version);
+        }
+    });
 }

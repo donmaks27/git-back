@@ -25,6 +25,8 @@ function YandexCloudRequestBuilder (Consts) {
      * @param {(error: bool, responce: http.IncomingMessage, data: string) => void} callback Функция обратного вызова
      */
     var SendGetRequest = (path, queryParams, callback) => {
+        Write.file.info('Запрос ссылки для загрузки файла ' + path + '...');
+
         if (typeof callback !== 'function') {
             return;
         }
@@ -79,6 +81,8 @@ function YandexCloudRequestBuilder (Consts) {
      * @param {(error: bool, responce: http.IncomingMessage) => void} callback Функция обратного вызова
      */
     var SendPutRequest = (path, queryParams, data, callback) => {
+        Write.file.info('Запрос ссылки для отправки файла на ' + path + '...');
+
         if (typeof callback !== 'function') {
             return;
         }

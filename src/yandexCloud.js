@@ -17,6 +17,96 @@ var YandexCloudRequestBuilder = require('./yandexCloudRequestBuilder');
 function YandexCloud (Consts, RequestBuilder) {
 
     /**
+     * Получить версию репозитория на сервере
+     * @param {boolean} overrideFile Перезаписать файл
+     * @param {(error: boolean) => void} callback 
+     */
+    var ReceiveServerRepoVersion = (overrideFile, callback) => {
+        if (typeof callback !== 'function') {
+            return;
+        }
+        
+        let path = '/' + Consts.nameLocalProject + '/' + Consts.nameRepoVersionFile;
+        RequestBuilder.sendGetRequest(path, {}, (error, response) => {
+            if (error) {
+                Write.file.error('Ошибка получения .version файла');
+                callback(true);
+                return;
+            }
+
+            if (!IsResponseCodeSuccess(response)) {
+                let body = '';
+                response.setEncoding('utf-8');
+                response.on('data', function (chunk) {
+                    body += chunk;
+                });
+                response.on('end', function () {
+                    xml.parseString(body, (error, parsedData) => {
+                        if (error) {
+                            Write.file.error('Некорректный формат ответа. ' + error.message);
+                            callback(true);
+                            return;
+                        }
+    
+                        Write.file.error('Ошибка получения .version файла. ' + parsedData.Error.Message[0], response.statusCode);
+                        callback(true);
+                    });
+                });
+                return;
+            }
+
+            // Извлечение файла
+            response.pipe(fs.createWriteStream(overrideFile ? Consts.pathLocalRepoVersionFile : Consts.pathLocalRepoVersionTempFile)).on('finish', () => {
+                Write.file.correct('Файл получен', response.statusCode);
+                callback(false);
+            });
+        });
+    }
+
+    /**
+     * Отправить версию репозитория на сервер
+     * @param {(error: boolean) => void} callback Функция обратного вызова
+     */
+    var SendLocalRepoVersion = (callback) => {
+        if (typeof callback !== 'function') {
+            return;
+        }
+
+        fs.readFile(Consts.pathLocalRepoVersionFile, (error, data) => {
+            if (error) {
+                Write.file.error(error.message, error.code);
+                callback(true);
+                return;
+            }
+
+            let path = '/' + Consts.nameLocalProject + '/' + Consts.nameRepoVersionFile;
+            RequestBuilder.sendPutRequest(path, {}, data, (error, response) => {
+                if (error) {
+                    Write.file.error('Ошибка отправки .version файла');
+                    callback(false);
+                    return;
+                }
+
+                if (!IsResponseCodeSuccess(response)) {
+                    let body = '';
+                    response.setEncoding('utf-8');
+                    response.on('data', function (chunk) {
+                        body += chunk;
+                    });
+                    response.on('end', function () {
+                        Write.file.error('Ошибка отправки .version файла. ' + data, response.statusCode);
+                        callback(true);
+                    });
+                }
+                else {
+                    Write.file.correct('.version файл отправлен', response.statusCode);
+                    callback(false);
+                }
+            });
+        });
+    }
+
+    /**
      * Отправить запакованную локальную копию репозитория на сервер
      * @param {(error: boolean) => void} callback Функция обратного вызова
      */
@@ -247,6 +337,9 @@ function YandexCloud (Consts, RequestBuilder) {
     var IsResponseCodeSuccess = (response) => {
         return response && (Math.floor(response.statusCode / 100) == 2);
     }
+
+    this.receiveServerRepoVersion = ReceiveServerRepoVersion;
+    this.sendLocalRepoVersion = SendLocalRepoVersion;
 
     this.sendLocalRepoArchive = SendLocalRepoArchive;
     this.receiveServerRepoArchive = ReceiveServerRepoArchive;
