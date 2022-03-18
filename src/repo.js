@@ -43,7 +43,7 @@ function Repo (Consts) {
     }
 
     var ExecuteCommand = (command, args, path) => {
-        child_process.spawnSync(command, args, {
+        return child_process.spawnSync(command, args, {
             cwd: path,
             shell: true,
             stdio: 'inherit'
@@ -106,7 +106,7 @@ function Repo (Consts) {
     }
 
     var IsBranchHaveUpstream = () => {
-        ExecuteCommand('git', ['branch', '-vv'], Consts.pathCurrent);
+        var output = ExecuteCommand('git', ['branch', '-vv'], Consts.pathCurrent);
 
         var branches = String(output.output);
         branches = branches.substr(1, branches.length - 3).split('\n');
