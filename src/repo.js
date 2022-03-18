@@ -42,20 +42,22 @@ function Repo (Consts) {
         return fs.existsSync(Consts.pathLocalRepoArchive);
     }
 
+    var ExecuteCommand = (command, args, path) => {
+        child_process.spawnSync(command, args, {
+            cwd: path,
+            shell: true,
+            stdio: 'inherit'
+        });
+    }
+
     /* GIT комманды */
 
     /**
      * Инициализация пустого git-репозитория
      */
     var InitEmptyRepo = () => {
-        child_process.spawnSync('git', ['init'], {
-            cwd: Consts.pathCurrent,
-            stdio: 'inherit'
-        });
-        child_process.spawnSync('git', ['remote', 'add', 'origin', Consts.pathLocalRepo], {
-            cwd: Consts.pathCurrent,
-            stdio: 'inherit'
-        });
+        ExecuteCommand('git', ['init'], Consts.pathCurrent);
+        ExecuteCommand('git', ['remote', 'add', 'origin', Consts.pathLocalRepo], Consts.pathCurrent);
     }
 
     /**
@@ -70,10 +72,7 @@ function Repo (Consts) {
                 Write.file.info('Создана папка для проекта');
             }
             // Клонирование голого репозитория
-            child_process.spawnSync('git', ['clone', '--bare', Consts.pathCurrent], {
-                cwd: Consts.pathLocalProject,
-                stdio: 'inherit' // Вывод в консоль
-            });
+            ExecuteCommand('git', ['clone', '--bare', Consts.pathCurrent], Consts.pathLocalProject);
             // Изменение источника
             ChangeCurrentRepoServer();
         }
@@ -86,10 +85,7 @@ function Repo (Consts) {
         // Если локальная копия репозитория есть
         if (CheckLocalRepo())
             // Смена источника
-            child_process.spawnSync('git', ['remote', 'set-url', 'origin', Consts.pathLocalRepo], {
-                cwd: Consts.pathCurrent,
-                stdio: 'inherit' // Вывод в консоль
-            });
+            ExecuteCommand('git', ['remote', 'set-url', 'origin', Consts.pathLocalRepo], Consts.pathCurrent);
     }
 
     /**
@@ -101,25 +97,16 @@ function Repo (Consts) {
             var branchInfo = IsBranchHaveUpstream();
             if (branchInfo.hasUpstream) {
                 // Отправка изменений
-                child_process.spawnSync('git', ['push'], {
-                    cwd: Consts.pathCurrent,
-                    stdio: 'inherit' // Вывод в консоль
-                });
+                ExecuteCommand('git', ['push'], Consts.pathCurrent);
             }
             else {
-                child_process.spawnSync('git', ['push', '--set-upstream', 'origin', branchInfo.branch], {
-                    cwd: Consts.pathCurrent,
-                    stdio: 'inherit' // Вывод в консоль
-                });
+                ExecuteCommand('git', ['push', '--set-upstream', 'origin', branchInfo.branch], Consts.pathCurrent);
             }
         }
     }
 
     var IsBranchHaveUpstream = () => {
-        var output = child_process.spawnSync('git', ['branch', '-vv'], {
-            cwd: Consts.pathCurrent,
-            stdio: 'pipe' // Вывод в консоль
-        });
+        ExecuteCommand('git', ['branch', '-vv'], Consts.pathCurrent);
 
         var branches = String(output.output);
         branches = branches.substr(1, branches.length - 3).split('\n');
@@ -154,10 +141,7 @@ function Repo (Consts) {
         // Если локальная копия репозитория есть
         if (CheckLocalRepo())
             // Получение изменений
-            child_process.spawnSync('git', ['pull'], {
-                cwd: Consts.pathCurrent,
-                stdio: 'inherit' // Вывод в консоль
-            });
+            ExecuteCommand('git', ['pull'], Consts.pathCurrent);
     }
 
     /**
@@ -171,10 +155,7 @@ function Repo (Consts) {
             if (!fs.existsSync(pathCurrentProject))
                 fs.mkdirSync(pathCurrentProject);
             // Клонирование репозитория
-            child_process.spawnSync('git', ['clone', Consts.pathLocalRepo], {
-                cwd: pathCurrentProject,
-                stdio: 'inherit' // Вывод в консоль
-            });
+            ExecuteCommand('git', ['clone', Consts.pathLocalRepo], pathCurrentProject);
         }
         else
             Write.file.error('Не найдена локальная копия репозитория');
