@@ -1,6 +1,6 @@
 {
     "name": "git-back",
-    "version": "5.1.2",
+    "version": "5.1.3",
     "description": "Программа для использования Яндекс.Диск как хранилище репозиториев.",
     "repository": {
         "type": "git",

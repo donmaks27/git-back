@@ -42,8 +42,10 @@ function Repo (Consts) {
         return fs.existsSync(Consts.pathLocalRepoArchive);
     }
 
-    var ExecuteCommand = (command, args, path) => {
-        return child_process.spawnSync(command, args, {
+    var ExecuteCommand = (command, args, path, silent) => {
+        return child_process.spawnSync(command, args, silent ? {
+            cwd: path
+        } : {
             cwd: path,
             shell: true,
             stdio: 'inherit'
@@ -57,7 +59,7 @@ function Repo (Consts) {
      */
     var InitEmptyRepo = () => {
         ExecuteCommand('git', ['init'], Consts.pathCurrent);
-        ExecuteCommand('git', ['remote', 'add', 'origin', Consts.pathLocalRepo], Consts.pathCurrent);
+        ExecuteCommand('git', ['remote', 'add', 'git_back', Consts.pathLocalRepo], Consts.pathCurrent);
     }
 
     /**
@@ -73,19 +75,24 @@ function Repo (Consts) {
             }
             // Клонирование голого репозитория
             ExecuteCommand('git', ['clone', '--bare', Consts.pathCurrent], Consts.pathLocalProject);
-            // Изменение источника
-            ChangeCurrentRepoServer();
         }
+        // Добавление источника
+        AddCurrentRepoServer();
     }
 
     /**
      * Смена источника репозитория
      */
-    var ChangeCurrentRepoServer = () => {
+    var AddCurrentRepoServer = () => {
         // Если локальная копия репозитория есть
-        if (CheckLocalRepo())
-            // Смена источника
-            ExecuteCommand('git', ['remote', 'set-url', 'origin', Consts.pathLocalRepo], Consts.pathCurrent);
+        if (CheckLocalRepo()) {
+            var remoteListResult = ExecuteCommand('git', ['remote'], Consts.pathCurrent, true);
+            var remoteList = String(remoteListResult.output);
+            if (remoteList.indexOf('git_back') == -1) {
+                // Смена источника
+                ExecuteCommand('git', ['remote', 'add', 'git_back', Consts.pathLocalRepo], Consts.pathCurrent);
+            }
+        }
     }
 
     /**
@@ -94,25 +101,26 @@ function Repo (Consts) {
     var PushCurrentToLocal = () => {
         // Если локальная копия репозитория есть
         if (CheckLocalRepo()) {
-            var branchInfo = IsBranchHaveUpstream();
+            var branchInfo = GetBranchUpstream();
             if (branchInfo.hasUpstream) {
                 // Отправка изменений
-                ExecuteCommand('git', ['push'], Consts.pathCurrent);
+                ExecuteCommand('git', ['push', 'git_back'], Consts.pathCurrent);
             }
             else {
-                ExecuteCommand('git', ['push', '--set-upstream', 'origin', branchInfo.branch], Consts.pathCurrent);
+                ExecuteCommand('git', ['push', '--set-upstream', 'git_back', branchInfo.branch], Consts.pathCurrent);
             }
         }
     }
 
-    var IsBranchHaveUpstream = () => {
-        var output = ExecuteCommand('git', ['branch', '-vv'], Consts.pathCurrent);
+    var GetBranchUpstream = () => {
+        var output = ExecuteCommand('git', ['branch', '-vv'], Consts.pathCurrent, true);
 
         var branches = String(output.output);
         branches = branches.substr(1, branches.length - 3).split('\n');
 
         var branchName = '';
         var hasUpstream = false;
+        var upsteamName = '';
         for (var i = 0; i < branches.length; i++) {
             var branch = branches[i];
             var index = branch.search(/(?<=^\s*\*\s*)\S/i);
@@ -123,14 +131,18 @@ function Repo (Consts) {
 
                 index = branch.search(/\[.+\]/i);
                 if (index != -1) {
-                    hasUpstream = true;
+                    upsteamName = branch.match(/(?<=\[).+(?=\/.+\])/i)[0];
+                    if (upsteamName == 'git_back') {
+                        hasUpstream = true;
+                    }
                 }
                 break;
             }
         }
         return {
             branch: branchName,
-            hasUpstream: hasUpstream
+            hasUpstream: hasUpstream,
+            upsteamName: upsteamName
         }
     }
 
@@ -141,7 +153,7 @@ function Repo (Consts) {
         // Если локальная копия репозитория есть
         if (CheckLocalRepo())
             // Получение изменений
-            ExecuteCommand('git', ['pull'], Consts.pathCurrent);
+            ExecuteCommand('git', ['pull', 'git_back'], Consts.pathCurrent);
     }
 
     /**
@@ -443,7 +455,7 @@ function Repo (Consts) {
 
     this.initEmptyRepo = InitEmptyRepo;
 
-    this.changeCurrentRepoServer = ChangeCurrentRepoServer;
+    this.changeCurrentRepoServer = AddCurrentRepoServer;
     this.cloneCurrentToLocal = CloneCurrentToLocal;
     this.cloneLocalToCurrent = CloneLocalToCurrent;
     this.pushCurrentToLocal = PushCurrentToLocal;
